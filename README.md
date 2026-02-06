@@ -1,7 +1,7 @@
 # NotebookLM AI 全能智慧王：突破前瞻未來工作流
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![NotebookLM](https://img.shields.io/badge/NotebookLM-Google-4285F4?logo=google)](https://notebooklm.google.com/)
+[![License](https://img.shields.io/badge/授權-學員專用-red.svg)](#授權聲明)
 
 完整的 NotebookLM 課程教材，涵蓋 19 個單元，從基礎功能到進階自動化系統開發。
 
@@ -89,6 +89,16 @@
 
 ---
 
-## 授權
+## 授權聲明
 
-本專案採用 MIT 授權條款
+**© 2026 阿亮老師 版權所有**
+
+本專案僅供「阿亮老師課程學員」學習使用。
+
+**禁止事項：**
+- 禁止修改本專案內容
+- 禁止轉傳或散布
+- 禁止商業使用
+- 禁止未經授權之任何形式使用
+
+如有任何授權需求，請聯繫作者。
