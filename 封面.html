@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>講義封面</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+    }
+
+    .cover {
+      width: 210mm;
+      height: 297mm;
+      background: linear-gradient(160deg, #0a0a1a 0%, #1a1a3e 40%, #0f2847 70%, #0a1628 100%);
+      border-radius: 0;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+    }
+
+    /* 背景裝飾 */
+    .bg-decoration {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .circle {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.1;
+    }
+
+    .circle-1 {
+      width: 600px;
+      height: 600px;
+      background: linear-gradient(45deg, #3498db, #9b59b6);
+      top: -200px;
+      right: -200px;
+    }
+
+    .circle-2 {
+      width: 400px;
+      height: 400px;
+      background: linear-gradient(45deg, #e74c3c, #f39c12);
+      bottom: -100px;
+      left: -100px;
+    }
+
+    .circle-3 {
+      width: 300px;
+      height: 300px;
+      background: linear-gradient(45deg, #2ecc71, #3498db);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* 網格線背景 */
+    .grid-lines {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image:
+        linear-gradient(rgba(52, 152, 219, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 152, 219, 0.03) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+
+    /* AI 圖示裝飾 */
+    .ai-icons {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .ai-icon {
+      position: absolute;
+      font-size: 24px;
+      opacity: 0.15;
+    }
+
+    .ai-icon:nth-child(1) { top: 15%; left: 10%; font-size: 30px; }
+    .ai-icon:nth-child(2) { top: 25%; right: 15%; font-size: 28px; }
+    .ai-icon:nth-child(3) { top: 60%; left: 8%; font-size: 26px; }
+    .ai-icon:nth-child(4) { top: 75%; right: 10%; font-size: 32px; }
+    .ai-icon:nth-child(5) { top: 40%; left: 85%; font-size: 24px; }
+    .ai-icon:nth-child(6) { bottom: 20%; left: 20%; font-size: 28px; }
+
+    /* 主要內容 */
+    .content {
+      position: relative;
+      z-index: 10;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 60px 50px;
+    }
+
+    /* 頂部標籤 */
+    .top-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(90deg, rgba(52, 152, 219, 0.2), rgba(155, 89, 182, 0.2));
+      border: 1px solid rgba(52, 152, 219, 0.3);
+      border-radius: 30px;
+      padding: 10px 24px;
+      width: fit-content;
+      margin-bottom: 40px;
+    }
+
+    .badge-icon {
+      font-size: 20px;
+    }
+
+    .badge-text {
+      color: #74b9ff;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 2px;
+    }
+
+    /* 主標題區 */
+    .title-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      margin-top: -40px;
+    }
+
+    .main-title {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1.3;
+      margin-bottom: 20px;
+    }
+
+    .title-line-1 {
+      background: linear-gradient(90deg, #fff 0%, #74b9ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block;
+    }
+
+    .title-line-2 {
+      background: linear-gradient(90deg, #f39c12 0%, #e74c3c 50%, #9b59b6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block;
+      font-size: 42px;
+    }
+
+    .subtitle {
+      font-size: 26px;
+      color: #a0a0b0;
+      font-weight: 400;
+      margin-top: 30px;
+      letter-spacing: 4px;
+    }
+
+    /* 分隔線 */
+    .divider {
+      width: 120px;
+      height: 4px;
+      background: linear-gradient(90deg, #3498db, #9b59b6, #e74c3c);
+      border-radius: 2px;
+      margin: 40px 0;
+    }
+
+    /* 特色標籤 */
+    .features {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 50px;
+    }
+
+    .feature-tag {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 8px 20px;
+      color: #b0b0c0;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feature-tag span {
+      font-size: 16px;
+    }
+
+    /* 講師區 */
+    .instructor-section {
+      margin-top: auto;
+      padding-top: 40px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .instructor-label {
+      color: #666;
+      font-size: 14px;
+      letter-spacing: 3px;
+      margin-bottom: 12px;
+    }
+
+    .instructor-name {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .instructor-alias {
+      color: #74b9ff;
+      font-weight: 500;
+    }
+
+    /* 底部裝飾線 */
+    .bottom-line {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #3498db, #9b59b6, #e74c3c, #f39c12, #2ecc71);
+    }
+
+    /* 角落裝飾 */
+    .corner-decoration {
+      position: absolute;
+      width: 150px;
+      height: 150px;
+      border: 2px solid rgba(52, 152, 219, 0.2);
+    }
+
+    .corner-top-right {
+      top: 30px;
+      right: 30px;
+      border-left: none;
+      border-bottom: none;
+    }
+
+    .corner-bottom-left {
+      bottom: 30px;
+      left: 30px;
+      border-right: none;
+      border-top: none;
+    }
+
+    /* 版本標記 */
+    .version {
+      position: absolute;
+      bottom: 25px;
+      right: 40px;
+      color: #444;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+
+    @media print {
+      body {
+        background: none;
+        padding: 0;
+      }
+      .cover {
+        box-shadow: none;
+        width: 100%;
+        height: 100vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="cover">
+    <!-- 背景裝飾 -->
+    <div class="bg-decoration">
+      <div class="circle circle-1"></div>
+      <div class="circle circle-2"></div>
+      <div class="circle circle-3"></div>
+    </div>
+
+    <div class="grid-lines"></div>
+
+    <!-- AI 圖示裝飾 -->
+    <div class="ai-icons">
+      <div class="ai-icon">🤖</div>
+      <div class="ai-icon">🧠</div>
+      <div class="ai-icon">📊</div>
+      <div class="ai-icon">🚀</div>
+      <div class="ai-icon">💡</div>
+      <div class="ai-icon">⚡</div>
+    </div>
+
+    <!-- 角落裝飾 -->
+    <div class="corner-decoration corner-top-right"></div>
+    <div class="corner-decoration corner-bottom-left"></div>
+
+    <!-- 主要內容 -->
+    <div class="content">
+      <!-- 頂部標籤 -->
+      <div class="top-badge">
+        <span class="badge-icon">📚</span>
+        <span class="badge-text">完整教學講義</span>
+      </div>
+
+      <!-- 主標題區 -->
+      <div class="title-section">
+        <h1 class="main-title">
+          <span class="title-line-1">NotebookLM AI</span>
+          <span class="title-line-1">全能智慧王</span>
+          <span class="title-line-2">突破前瞻未來工作流</span>
+        </h1>
+
+        <div class="divider"></div>
+
+        <!-- 特色標籤 -->
+        <div class="features">
+          <div class="feature-tag"><span>🎯</span> 19 個完整單元</div>
+          <div class="feature-tag"><span>🎨</span> 簡報設計技巧</div>
+          <div class="feature-tag"><span>⚙️</span> 自動化工具</div>
+          <div class="feature-tag"><span>🔧</span> 後製編輯</div>
+        </div>
+      </div>
+
+      <!-- 講師區 -->
+      <div class="instructor-section">
+        <div class="instructor-label">講師 INSTRUCTOR</div>
+        <div class="instructor-name">
+          曾慶良 <span class="instructor-alias">(阿亮老師)</span>
+        </div>
+        <div style="margin-top: 25px; display: flex; gap: 15px; flex-wrap: wrap;">
+          <a href="單元目次.html" style="display: inline-block; background: linear-gradient(90deg, #3498db, #9b59b6); color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-size: 16px; font-weight: 600; transition: all 0.3s; box-shadow: 0 5px 20px rgba(52, 152, 219, 0.4);">📖 進入課程目次</a>
+          <a href="單元1-NotebookLM核心功能介紹.html" style="display: inline-block; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-size: 16px; font-weight: 500; transition: all 0.3s;">▶ 開始學習 單元1</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部裝飾線 -->
+    <div class="bottom-line"></div>
+
+    <!-- 版本標記 -->
+    <div class="version">© 2026 版權所有</div>
+  </div>
+</body>
+</html>

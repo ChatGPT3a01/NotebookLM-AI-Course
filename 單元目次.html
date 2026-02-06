@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>單元目次 - NotebookLM AI 全能智慧王</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* 頂部標題區 */
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #74b9ff;
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 30px;
+      transition: color 0.3s;
+    }
+
+    .back-link:hover {
+      color: #a29bfe;
+    }
+
+    .main-title {
+      font-size: 48px;
+      font-weight: 900;
+      background: linear-gradient(90deg, #fff 0%, #74b9ff 50%, #a29bfe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 15px;
+    }
+
+    .subtitle {
+      font-size: 20px;
+      color: #a0a0b0;
+      letter-spacing: 3px;
+    }
+
+    .divider {
+      width: 150px;
+      height: 4px;
+      background: linear-gradient(90deg, #3498db, #9b59b6, #e74c3c);
+      border-radius: 2px;
+      margin: 30px auto;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 36px;
+      font-weight: 900;
+      color: #74b9ff;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #888;
+      letter-spacing: 2px;
+    }
+
+    /* 單元分類 */
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 20px;
+      padding-left: 10px;
+      border-left: 4px solid;
+    }
+
+    .section-basics { border-color: #3498db; }
+    .section-slides { border-color: #9b59b6; }
+    .section-editing { border-color: #e74c3c; }
+    .section-automation { border-color: #2ecc71; }
+    .section-advanced { border-color: #f39c12; }
+
+    .section-icon {
+      font-size: 28px;
+    }
+
+    /* 單元卡片 */
+    .units-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .unit-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 24px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .unit-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #3498db, #9b59b6);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .unit-card:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .unit-card:hover::before {
+      opacity: 1;
+    }
+
+    .unit-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #3498db, #9b59b6);
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+
+    .unit-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .unit-desc {
+      font-size: 13px;
+      color: #888;
+      line-height: 1.5;
+    }
+
+    .unit-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .unit-tag {
+      font-size: 11px;
+      padding: 4px 10px;
+      background: rgba(52, 152, 219, 0.2);
+      border-radius: 12px;
+      color: #74b9ff;
+    }
+
+    /* 底部 */
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .instructor {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .instructor-name {
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .instructor-alias {
+      color: #74b9ff;
+    }
+
+    .copyright {
+      color: #444;
+      font-size: 12px;
+      margin-top: 20px;
+    }
+
+    /* 響應式 */
+    @media (max-width: 768px) {
+      .main-title {
+        font-size: 32px;
+      }
+
+      .stats {
+        gap: 20px;
+      }
+
+      .stat-number {
+        font-size: 28px;
+      }
+
+      .units-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        color: #333;
+      }
+
+      .unit-card {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+      }
+
+      .unit-title, .main-title {
+        color: #333;
+        -webkit-text-fill-color: #333;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 頂部標題區 -->
+    <header class="header">
+      <a href="封面.html" class="back-link">← 返回封面</a>
+      <h1 class="main-title">單元目次</h1>
+      <p class="subtitle">NotebookLM AI 全能智慧王・完整教學講義</p>
+      <div class="divider"></div>
+
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-number">19</div>
+          <div class="stat-label">完整單元</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">5</div>
+          <div class="stat-label">主題模組</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">400+</div>
+          <div class="stat-label">教學頁面</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 基礎功能模組 -->
+    <section class="section">
+      <h2 class="section-title section-basics">
+        <span class="section-icon">📚</span>
+        基礎功能模組
+      </h2>
+      <div class="units-grid">
+        <a href="單元1-NotebookLM核心功能介紹.html" class="unit-card">
+          <div class="unit-number">1</div>
+          <div class="unit-title">NotebookLM 核心功能介紹</div>
+          <div class="unit-desc">認識 NotebookLM 的強大功能，了解 AI 如何革新知識管理與內容創作</div>
+          <div class="unit-tags">
+            <span class="unit-tag">入門必學</span>
+            <span class="unit-tag">功能總覽</span>
+          </div>
+        </a>
+        <a href="單元2-來源管理.html" class="unit-card">
+          <div class="unit-number">2</div>
+          <div class="unit-title">來源管理</div>
+          <div class="unit-desc">掌握多元來源類型：PDF、網頁、YouTube、Google 文件等上傳與管理技巧</div>
+          <div class="unit-tags">
+            <span class="unit-tag">來源類型</span>
+            <span class="unit-tag">50個上限</span>
+          </div>
+        </a>
+        <a href="單元3-內容生成類型總覽.html" class="unit-card">
+          <div class="unit-number">3</div>
+          <div class="unit-title">內容生成類型總覽</div>
+          <div class="unit-desc">深入了解 Podcast、影片摘要、心智圖、測驗、報告等多元輸出格式</div>
+          <div class="unit-tags">
+            <span class="unit-tag">7種輸出</span>
+            <span class="unit-tag">AI生成</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 簡報設計模組 -->
+    <section class="section">
+      <h2 class="section-title section-slides">
+        <span class="section-icon">🎨</span>
+        簡報設計模組
+      </h2>
+      <div class="units-grid">
+        <a href="單元4-五大神級簡報風格提示詞.html" class="unit-card">
+          <div class="unit-number">4</div>
+          <div class="unit-title">五大神級簡報風格提示詞</div>
+          <div class="unit-desc">商務極簡、資訊圖表、故事敘事、學術專業、創意設計五大風格完整攻略</div>
+          <div class="unit-tags">
+            <span class="unit-tag">提示詞</span>
+            <span class="unit-tag">風格設計</span>
+          </div>
+        </a>
+        <a href="單元5-十五種資料視覺化圖表指令.html" class="unit-card">
+          <div class="unit-number">5</div>
+          <div class="unit-title">十五種資料視覺化圖表指令</div>
+          <div class="unit-desc">流程圖、甘特圖、時間軸、雷達圖等專業圖表的 Mermaid 語法教學</div>
+          <div class="unit-tags">
+            <span class="unit-tag">Mermaid</span>
+            <span class="unit-tag">視覺化</span>
+          </div>
+        </a>
+        <a href="單元6-簡報模板套用三階段法.html" class="unit-card">
+          <div class="unit-number">6</div>
+          <div class="unit-title">簡報模板套用三階段法</div>
+          <div class="unit-desc">標準化提示詞、模板匹配、視覺優化三階段工作流程完整教學</div>
+          <div class="unit-tags">
+            <span class="unit-tag">工作流程</span>
+            <span class="unit-tag">模板</span>
+          </div>
+        </a>
+        <a href="單元7-兩次作業法.html" class="unit-card">
+          <div class="unit-number">7</div>
+          <div class="unit-title">兩次作業法</div>
+          <div class="unit-desc">先完成再完美！透過結構生成與細節優化兩階段提升簡報品質</div>
+          <div class="unit-tags">
+            <span class="unit-tag">方法論</span>
+            <span class="unit-tag">效率提升</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 後製編輯模組 -->
+    <section class="section">
+      <h2 class="section-title section-editing">
+        <span class="section-icon">🔧</span>
+        後製編輯模組
+      </h2>
+      <div class="units-grid">
+        <a href="單元8-為什麼PDF無法直接編輯.html" class="unit-card">
+          <div class="unit-number">8</div>
+          <div class="unit-title">為什麼 PDF 無法直接編輯</div>
+          <div class="unit-desc">深入理解 PDF 技術原理，認識編輯限制與突破方法</div>
+          <div class="unit-tags">
+            <span class="unit-tag">技術原理</span>
+            <span class="unit-tag">PDF結構</span>
+          </div>
+        </a>
+        <a href="單元9-PDNob文字編輯.html" class="unit-card">
+          <div class="unit-number">9</div>
+          <div class="unit-title">PDNob 文字編輯</div>
+          <div class="unit-desc">OCR 文字識別神器，快速擷取與編輯圖片中的文字內容</div>
+          <div class="unit-tags">
+            <span class="unit-tag">OCR</span>
+            <span class="unit-tag">文字擷取</span>
+          </div>
+        </a>
+        <a href="單元10-NotebookLM編輯器.html" class="unit-card">
+          <div class="unit-number">10</div>
+          <div class="unit-title">NotebookLM 編輯器</div>
+          <div class="unit-desc">專業浮水印移除工具，讓影片摘要更加專業乾淨</div>
+          <div class="unit-tags">
+            <span class="unit-tag">浮水印</span>
+            <span class="unit-tag">影片處理</span>
+          </div>
+        </a>
+        <a href="單元11-CanvaPro視覺升級.html" class="unit-card">
+          <div class="unit-number">11</div>
+          <div class="unit-title">Canva Pro 視覺升級</div>
+          <div class="unit-desc">運用 Canva Pro 強大功能進行專業視覺設計與品牌美化</div>
+          <div class="unit-tags">
+            <span class="unit-tag">設計工具</span>
+            <span class="unit-tag">視覺升級</span>
+          </div>
+        </a>
+        <a href="單元12-Lovart深度編輯.html" class="unit-card">
+          <div class="unit-number">12</div>
+          <div class="unit-title">Lovart 深度編輯</div>
+          <div class="unit-desc">AI 智能圖層分離技術，實現精準的圖片元素編輯</div>
+          <div class="unit-tags">
+            <span class="unit-tag">AI編輯</span>
+            <span class="unit-tag">圖層分離</span>
+          </div>
+        </a>
+        <a href="單元13-實戰應用場景與工具選擇.html" class="unit-card">
+          <div class="unit-number">13</div>
+          <div class="unit-title">實戰應用場景與工具選擇</div>
+          <div class="unit-desc">工具選擇決策樹，根據不同場景選擇最適合的後製工具</div>
+          <div class="unit-tags">
+            <span class="unit-tag">決策指南</span>
+            <span class="unit-tag">工具對比</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 自動化工具模組 -->
+    <section class="section">
+      <h2 class="section-title section-automation">
+        <span class="section-icon">⚙️</span>
+        自動化工具模組
+      </h2>
+      <div class="units-grid">
+        <a href="單元14-Chrome擴充程式安裝與使用.html" class="unit-card">
+          <div class="unit-number">14</div>
+          <div class="unit-title">Chrome 擴充程式安裝與使用</div>
+          <div class="unit-desc">Web Importer、notebooklm-tools 等實用擴充功能完整教學</div>
+          <div class="unit-tags">
+            <span class="unit-tag">Chrome</span>
+            <span class="unit-tag">擴充功能</span>
+          </div>
+        </a>
+        <a href="單元15-NotebookLM自動化Web系統操作.html" class="unit-card">
+          <div class="unit-number">15</div>
+          <div class="unit-title">NotebookLM 自動化 Web 系統操作</div>
+          <div class="unit-desc">Flask 架構的自動化系統，實現批次處理與一鍵生成</div>
+          <div class="unit-tags">
+            <span class="unit-tag">Flask</span>
+            <span class="unit-tag">自動化</span>
+          </div>
+        </a>
+        <a href="單元16-簡報編修系統PDF轉PowerPoint.html" class="unit-card">
+          <div class="unit-number">16</div>
+          <div class="unit-title">簡報編修系統 PDF 轉 PowerPoint</div>
+          <div class="unit-desc">專業 PDF 轉 PPTX 解決方案，保持版面與可編輯性</div>
+          <div class="unit-tags">
+            <span class="unit-tag">格式轉換</span>
+            <span class="unit-tag">PDF→PPTX</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 進階技術模組 -->
+    <section class="section">
+      <h2 class="section-title section-advanced">
+        <span class="section-icon">🚀</span>
+        進階技術模組
+      </h2>
+      <div class="units-grid">
+        <a href="單元17-系統部署與遠端存取配置.html" class="unit-card">
+          <div class="unit-number">17</div>
+          <div class="unit-title">系統部署與遠端存取配置</div>
+          <div class="unit-desc">完整的伺服器部署流程，包含 Ngrok、防火牆與安全設定</div>
+          <div class="unit-tags">
+            <span class="unit-tag">部署</span>
+            <span class="unit-tag">Ngrok</span>
+          </div>
+        </a>
+        <a href="單元18-前端架構Vue3與Pinia狀態管理.html" class="unit-card">
+          <div class="unit-number">18</div>
+          <div class="unit-title">前端架構 Vue 3 與 Pinia 狀態管理</div>
+          <div class="unit-desc">現代前端框架實戰，Vue 3 組件化開發與狀態管理最佳實踐</div>
+          <div class="unit-tags">
+            <span class="unit-tag">Vue 3</span>
+            <span class="unit-tag">Pinia</span>
+          </div>
+        </a>
+        <a href="單元19-後端架構Flask與GeminiAPI整合.html" class="unit-card">
+          <div class="unit-number">19</div>
+          <div class="unit-title">後端架構 Flask 與 Gemini API 整合</div>
+          <div class="unit-desc">Python Flask 後端開發，整合 Google Gemini AI 實現智能功能</div>
+          <div class="unit-tags">
+            <span class="unit-tag">Flask</span>
+            <span class="unit-tag">Gemini API</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- 底部 -->
+    <footer class="footer">
+      <div class="instructor">講師 INSTRUCTOR</div>
+      <div class="instructor-name">
+        曾慶良 <span class="instructor-alias">(阿亮老師)</span>
+      </div>
+      <div class="copyright">© 2026 版權所有 | NotebookLM AI 全能智慧王</div>
+    </footer>
+  </div>
+</body>
+</html>

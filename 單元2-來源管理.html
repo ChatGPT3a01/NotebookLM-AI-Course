@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單元 2 - 來源管理：URL、YouTube、PDF 匯入</title>
+    <style>
+        /* 基礎設定 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* === 導航列 === */
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .nav-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .nav-buttons { display: flex; gap: 12px; }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* === 導航箭頭 === */
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* === 投影片容器 === */
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            padding-top: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 20;
+        }
+
+        /* === 內容卡片 === */
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 45px 55px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* === 封面特殊樣式 === */
+        .cover-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(160deg, #0a0a1a 0%, #1a1a3e 40%, #0f2847 70%, #0a1628 100%);
+            color: white;
+        }
+
+        .cover-card .unit-badge {
+            background: linear-gradient(90deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3));
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            border-radius: 30px;
+            padding: 10px 30px;
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            color: #74b9ff;
+        }
+
+        .cover-card h1 {
+            font-size: 52px;
+            background: linear-gradient(90deg, #fff 0%, #74b9ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .cover-card .subtitle {
+            font-size: 24px;
+            color: #a0a0b0;
+            max-width: 700px;
+            line-height: 1.6;
+        }
+
+        .cover-card .tags {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cover-card .tag {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #b0b0c0;
+        }
+
+        /* 其他通用樣式 */
+        h1 { color: #1a1a2e; font-size: 38px; margin-bottom: 20px; border-bottom: 4px solid #3498db; padding-bottom: 12px; }
+        h2 { color: #16213e; font-size: 28px; margin: 25px 0 15px 0; }
+        h3 { color: #0f3460; font-size: 22px; margin: 20px 0 12px 0; }
+        p, li { font-size: 18px; line-height: 1.85; color: #444; margin-bottom: 12px; }
+        ul, ol { padding-left: 25px; }
+        li { margin-bottom: 10px; }
+
+        code {
+            background: #f0f2f5;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            color: #e74c3c;
+            font-size: 0.95em;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #74b9ff 0%, #a29bfe 100%);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .box {
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 5px solid;
+            font-size: 17px;
+        }
+        .info { background: #e3f2fd; border-color: #2196f3; color: #0d47a1; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .tip { background: #f3e5f5; border-color: #9c27b0; color: #4a148c; }
+        .example { background: #e8f5e9; border-color: #4caf50; color: #1b5e20; }
+
+        /* 提示詞區塊 */
+        .prompt-box {
+            background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            position: relative;
+        }
+        .prompt-box::before {
+            content: '提示詞範例';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .prompt-box p {
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+            font-size: 17px;
+            line-height: 1.8;
+            margin: 10px 0 0 0;
+        }
+
+        /* 情境卡片 */
+        .scenario-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            color: white;
+        }
+        .scenario-box h3 {
+            color: white;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .scenario-box p {
+            color: rgba(255,255,255,0.95);
+            font-size: 17px;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        .concept-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .concept-card:hover {
+            transform: translateY(-5px);
+            border-color: #74b9ff;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .concept-card h3 {
+            color: #1a1a2e;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+        }
+        .concept-card p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 0;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .feature-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .step-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 18px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #3498db;
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .comparison-table th {
+            background: #f8f9fa;
+            color: #1a1a2e;
+            font-weight: 700;
+        }
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .indicators {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 4000;
+            padding: 12px 25px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 30px;
+            backdrop-filter: blur(8px);
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dot:hover {
+            background: rgba(255,255,255,0.7);
+        }
+        .dot.active {
+            background: #74b9ff;
+            transform: scale(1.3);
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            right: 25px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* 滾動條美化 */
+        .content-card::-webkit-scrollbar {
+            width: 8px;
+        }
+        .content-card::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        /* 對話示範 */
+        .chat-demo {
+            background: #f5f5f5;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .chat-msg {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .chat-msg:last-child {
+            margin-bottom: 0;
+        }
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .chat-user .chat-avatar {
+            background: #3498db;
+        }
+        .chat-ai .chat-avatar {
+            background: #9b59b6;
+        }
+        .chat-bubble {
+            background: white;
+            padding: 12px 18px;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 85%;
+        }
+        .chat-ai .chat-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .chat-bubble p {
+            margin: 0;
+            font-size: 16px;
+        }
+        .chat-bubble .source-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        /* 命名範例區塊 */
+        .naming-example {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            border: 2px dashed #74b9ff;
+        }
+        .naming-example code {
+            display: block;
+            margin: 8px 0;
+            padding: 8px 15px;
+            background: white;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 導航列 -->
+    <div class="nav-bar">
+        <div class="nav-title">單元 2 - 來源管理：URL、YouTube、PDF 匯入</div>
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="goToSlide(0)">首頁</button>
+            <button class="nav-btn" onclick="toggleFullscreen()">全螢幕</button>
+            <a href="單元目次.html" class="nav-btn">目次</a>
+            <a href="https://www.facebook.com/groups/2754139931432955" target="_blank" class="nav-btn">FB</a>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">YT</a>
+        </div>
+    </div>
+
+    <!-- 投影片內容 -->
+    <div class="slide-container">
+
+        <!-- Slide 1: 封面 -->
+        <div class="slide active">
+            <div class="content-card cover-card">
+                <div class="unit-badge">第一部分：基礎入門篇</div>
+                <h1>來源管理</h1>
+                <p class="subtitle">URL、YouTube、PDF 匯入技巧<br>掌握「來源品質決定產出品質」的關鍵原則</p>
+                <div class="tags">
+                    <span class="tag">PDF 文件匯入</span>
+                    <span class="tag">URL 網頁擷取</span>
+                    <span class="tag">YouTube 字幕</span>
+                    <span class="tag">Chrome 擴充程式</span>
+                    <span class="tag">來源組織策略</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 核心觀念 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>核心觀念：來源品質 = 產出品質</h1>
+                <div style="text-align: center; padding: 20px 0;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">GIGO</div>
+                    <h2 style="font-size: 32px; color: #e74c3c; border: none;">Garbage In, Garbage Out</h2>
+                    <p style="font-size: 20px;">垃圾進，垃圾出</p>
+                </div>
+
+                <div class="two-column">
+                    <div>
+                        <div class="box warning">
+                            <strong>低品質來源的後果</strong>
+                            <ul style="margin-top: 10px; padding-left: 20px;">
+                                <li>資訊不完整或錯誤</li>
+                                <li>AI 回答模糊或矛盾</li>
+                                <li>生成的 Podcast 內容空洞</li>
+                                <li>簡報缺乏重點</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="box success">
+                            <strong>高品質來源的效果</strong>
+                            <ul style="margin-top: 10px; padding-left: 20px;">
+                                <li>回答精確有據</li>
+                                <li>引用清晰可查</li>
+                                <li>產出內容豐富</li>
+                                <li>分析深入全面</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box tip" style="text-align: center; font-size: 20px;">
+                    <strong>本單元目標：學會選擇、處理、組織高品質來源</strong>
+                </div>
+                <span class="page-number">2 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 3: 來源類型總覽 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>NotebookLM 支援的來源類型</h1>
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="concept-card" style="border-top: 5px solid #e74c3c;">
+                        <h3>PDF 文件</h3>
+                        <p>最可靠的來源格式<br>支援掃描版 OCR<br>單檔上限 500,000 字</p>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #3498db;">
+                        <h3>URL 網頁</h3>
+                        <p>即時擷取網頁內容<br>需注意登入牆問題<br>動態載入可能失敗</p>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #e74c3c;">
+                        <h3>YouTube 影片</h3>
+                        <p>自動擷取字幕內容<br>需有字幕才能處理<br>適合演講、教學</p>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #f39c12;">
+                        <h3>Google 文件</h3>
+                        <p>Docs、Slides 整合<br>即時同步更新<br>需授權存取權限</p>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #9b59b6;">
+                        <h3>純文字貼上</h3>
+                        <p>最靈活的方式<br>適合 Email、筆記<br>片段資料整合</p>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #2ecc71;">
+                        <h3>音訊檔案</h3>
+                        <p>MP3、WAV 等格式<br>自動轉錄為文字<br>適合會議錄音</p>
+                    </div>
+                </div>
+                <div class="box info">
+                    <strong>限制提醒：</strong>每個筆記本最多 <strong>50 個來源</strong>，每個來源約 <strong>500,000 字</strong>上限
+                </div>
+                <span class="page-number">3 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 4: PDF 文件詳解 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>PDF 文件 - 最可靠的來源格式</h1>
+                <p style="font-size: 20px; color: #27ae60; font-weight: bold;">推薦優先使用 PDF，品質最穩定！</p>
+
+                <div class="two-column" style="margin-top: 20px;">
+                    <div>
+                        <h3>優點</h3>
+                        <ul class="feature-list">
+                            <li><span class="feature-icon">+</span><div>格式固定，不會被網頁雜訊干擾</div></li>
+                            <li><span class="feature-icon">+</span><div>支援掃描版 PDF（OCR 文字辨識）</div></li>
+                            <li><span class="feature-icon">+</span><div>頁碼引用清晰準確</div></li>
+                            <li><span class="feature-icon">+</span><div>離線檔案，內容不會變動</div></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>注意事項</h3>
+                        <ul class="feature-list">
+                            <li><span class="feature-icon">!</span><div>單檔上限約 <strong>500,000 字</strong>（約 200 頁）</div></li>
+                            <li><span class="feature-icon">!</span><div>圖片、圖表內的文字可能無法辨識</div></li>
+                            <li><span class="feature-icon">!</span><div>加密或受保護的 PDF 無法處理</div></li>
+                            <li><span class="feature-icon">!</span><div>複雜排版可能影響文字擷取順序</div></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box tip">
+                    <strong>最佳實務：</strong>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>優先使用「文字版 PDF」而非掃描版</li>
+                        <li>超長文件可拆分成多個來源</li>
+                        <li>確認 PDF 可以選取文字（測試 Ctrl+C 複製）</li>
+                    </ul>
+                </div>
+                <span class="page-number">4 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 5: URL 網頁詳解 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>URL 網頁 - 便利但需注意限制</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="concept-card" style="background: #fff3cd;">
+                        <h3 style="color: #856404;">登入牆問題</h3>
+                        <p style="color: #856404;">需要登入才能看的內容（如付費文章、會員專區）無法擷取</p>
+                    </div>
+                    <div class="concept-card" style="background: #fff3cd;">
+                        <h3 style="color: #856404;">動態載入</h3>
+                        <p style="color: #856404;">JavaScript 動態生成的內容可能無法完整擷取</p>
+                    </div>
+                    <div class="concept-card" style="background: #fff3cd;">
+                        <h3 style="color: #856404;">網頁雜訊</h3>
+                        <p style="color: #856404;">廣告、導航列、側邊欄等非主要內容可能被納入</p>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 25px;">適合的網頁類型</h3>
+                <div class="two-column">
+                    <div>
+                        <div class="box success">
+                            <strong>推薦</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>維基百科</li>
+                                <li>官方文件、技術文件</li>
+                                <li>新聞媒體文章</li>
+                                <li>部落格文章</li>
+                                <li>GitHub README</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="box warning">
+                            <strong>避免或需確認</strong>
+                            <ul style="margin-top: 8px; padding-left: 20px;">
+                                <li>需登入的頁面</li>
+                                <li>SPA 單頁應用程式</li>
+                                <li>PDF 內嵌網頁</li>
+                                <li>圖片為主的頁面</li>
+                                <li>影片串流平台頁面</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">5 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 6: URL 網頁解決方案 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>URL 問題的解決方案</h1>
+
+                <div class="step-box">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>登入牆 / 付費牆</strong><br>
+                        先登入後，使用瀏覽器的「另存為 PDF」功能，再上傳 PDF
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>動態載入內容</strong><br>
+                        等頁面完全載入後，選取文字複製，使用「貼上文字」功能
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>網頁雜訊過多</strong><br>
+                        使用瀏覽器的「閱讀模式」後再另存 PDF，或手動複製主要內容
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">4</span>
+                    <div>
+                        <strong>確認擷取品質</strong><br>
+                        加入來源後，點擊來源名稱查看預覽，確認內容是否完整
+                    </div>
+                </div>
+
+                <div class="box info">
+                    <strong>小技巧：</strong>Chrome 瀏覽器按 <code>Ctrl + P</code> 可以將任何網頁存成 PDF！
+                </div>
+                <span class="page-number">6 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 7: YouTube 影片詳解 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>YouTube 影片 - 字幕擷取機制</h1>
+
+                <div class="box info" style="font-size: 20px;">
+                    <strong>核心原理：</strong>NotebookLM 擷取的是 YouTube 影片的<strong>字幕文字</strong>，不是影片本身！
+                </div>
+
+                <div class="two-column" style="margin-top: 20px;">
+                    <div>
+                        <h3>字幕來源優先順序</h3>
+                        <ol>
+                            <li><strong>創作者手動上傳的字幕</strong>（品質最高）</li>
+                            <li><strong>YouTube 自動產生字幕</strong>（品質次之）</li>
+                            <li><strong>無字幕</strong>（無法處理！）</li>
+                        </ol>
+
+                        <div class="box warning" style="margin-top: 20px;">
+                            <strong>無法處理的情況：</strong>
+                            <ul style="padding-left: 20px; margin-top: 8px;">
+                                <li>影片沒有任何字幕</li>
+                                <li>私人或不公開影片</li>
+                                <li>年齡限制影片</li>
+                                <li>直播中（需等直播結束）</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>品質檢查步驟</h3>
+                        <div class="step-box">
+                            <span class="step-number">1</span>
+                            <div>打開 YouTube 影片</div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">2</span>
+                            <div>點擊 CC 字幕按鈕</div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">3</span>
+                            <div>查看字幕是否準確</div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">4</span>
+                            <div>確認語言是否正確</div>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">7 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 8: YouTube 提問範例 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>YouTube 來源的提問範例</h1>
+
+                <h3>摘要類提問</h3>
+                <div class="prompt-box">
+                    <p>「這部影片的 5 個核心重點是什麼？」</p>
+                    <p>「講者在影片中提出了哪些主要論點？」</p>
+                    <p>「用 3 句話總結這場演講的內容」</p>
+                </div>
+
+                <h3>細節類提問</h3>
+                <div class="prompt-box">
+                    <p>「講者提到的案例有哪些？分別說明什麼觀點？」</p>
+                    <p>「影片中有提到哪些具體數據或統計？」</p>
+                    <p>「講者對 [特定主題] 的看法是什麼？」</p>
+                </div>
+
+                <h3>應用類提問</h3>
+                <div class="prompt-box">
+                    <p>「根據這場演講，我可以如何應用在工作中？」</p>
+                    <p>「如果我要向團隊分享這場演講的精華，應該強調哪些重點？」</p>
+                    <p>「這場演講和我之前上傳的報告有哪些共同點？」</p>
+                </div>
+                <span class="page-number">8 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 9: 情境示範 - YouTube -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>情境示範：2 小時演講快速消化</h1>
+
+                <div class="scenario-box">
+                    <h3>情境設定</h3>
+                    <p>你的主管分享了一個 2 小時的產業趨勢演講影片，要求你在明天的會議上報告重點。你只有 30 分鐘的準備時間。</p>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>建立筆記本</strong>：「產業趨勢報告_2026Q1」
+                    </div>
+                </div>
+                <div class="step-box">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>加入 YouTube 來源</strong>：貼上影片網址，等待處理
+                    </div>
+                </div>
+                <div class="step-box">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>快速提問</strong>：
+                        <div class="prompt-box" style="margin-top: 10px;">
+                            <p>「這場演講的 5 大重點是什麼？請用條列方式說明」</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="step-box">
+                    <span class="step-number">4</span>
+                    <div>
+                        <strong>深入追問</strong>：
+                        <div class="prompt-box" style="margin-top: 10px;">
+                            <p>「講者對 2026 年的預測有哪些？這對我們公司有什麼影響？」</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box success">
+                    <strong>結果：</strong>30 分鐘內完成 2 小時演講的重點整理，還有時間製作簡報！
+                </div>
+                <span class="page-number">9 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 10: Google 文件整合 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>Google 文件整合</h1>
+
+                <div class="two-column">
+                    <div>
+                        <h3>支援的格式</h3>
+                        <ul class="feature-list">
+                            <li><span class="feature-icon">G</span><div><strong>Google Docs</strong> - 文字文件</div></li>
+                            <li><span class="feature-icon">G</span><div><strong>Google Slides</strong> - 簡報投影片</div></li>
+                        </ul>
+
+                        <h3 style="margin-top: 25px;">優點</h3>
+                        <ul>
+                            <li>直接從 Google Drive 選取</li>
+                            <li>無需下載再上傳</li>
+                            <li>適合團隊協作文件</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>使用步驟</h3>
+                        <div class="step-box">
+                            <span class="step-number">1</span>
+                            <div>點擊「新增來源」</div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">2</span>
+                            <div>選擇「Google Drive」</div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">3</span>
+                            <div>授權存取權限（首次使用）</div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">4</span>
+                            <div>選取要加入的文件</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box warning">
+                    <strong>注意：</strong>NotebookLM 會擷取加入當下的文件內容。如果 Google 文件後來有更新，需要重新加入來源才會反映變更。
+                </div>
+                <span class="page-number">10 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 11: 純文字貼上 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>純文字貼上 - 最靈活的方式</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card">
+                        <h3>適用場景</h3>
+                        <ul style="padding-left: 20px;">
+                            <li>Email 往來內容</li>
+                            <li>聊天記錄整理</li>
+                            <li>會議筆記</li>
+                            <li>網頁擷取失敗時的替代方案</li>
+                            <li>多來源資料整合</li>
+                            <li>自己撰寫的摘要或筆記</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h3>最佳實務</h3>
+                        <ul style="padding-left: 20px;">
+                            <li>給貼上的文字一個<strong>清楚的標題</strong></li>
+                            <li>適當分段，保持結構</li>
+                            <li>移除無關的格式符號</li>
+                            <li>可以在開頭加上背景說明</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box example">
+                    <strong>範例：貼上 Email 討論串</strong>
+                    <pre style="background: white; padding: 15px; border-radius: 8px; margin-top: 10px; font-size: 14px; overflow-x: auto;">
+【專案討論】2026年Q1行銷預算
+
+寄件者：王經理
+日期：2026/1/15
+
+團隊好，
+
+關於Q1行銷預算，我建議...
+
+---
+
+回覆者：李主任
+日期：2026/1/16
+
+經理好，
+我認為數位廣告的比例可以提高...
+                    </pre>
+                </div>
+                <span class="page-number">11 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 12: Chrome 擴充程式 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>Chrome 擴充程式：NotebookLM Quick Add</h1>
+                <p style="font-size: 20px; margin-bottom: 20px;">一鍵將網頁加入 NotebookLM，省去複製貼上的麻煩！</p>
+
+                <div class="two-column">
+                    <div>
+                        <h3>安裝步驟</h3>
+                        <div class="step-box">
+                            <span class="step-number">1</span>
+                            <div>前往 Chrome 線上應用程式商店</div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">2</span>
+                            <div>搜尋「NotebookLM Quick Add」</div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">3</span>
+                            <div>點擊「加到 Chrome」</div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">4</span>
+                            <div>釘選到工具列方便使用</div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>使用方式</h3>
+                        <div class="box success">
+                            <strong>方法一：點擊圖示</strong><br>
+                            在任何網頁上點擊擴充程式圖示，選擇要加入的筆記本
+                        </div>
+                        <div class="box info">
+                            <strong>方法二：快捷鍵</strong><br>
+                            <code style="font-size: 20px;">Alt + N</code><br>
+                            快速開啟加入來源選單
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box tip">
+                    <strong>使用情境：</strong>研究某個主題時，邊瀏覽邊用 <code>Alt + N</code> 快速收集相關網頁，最後在 NotebookLM 統一分析！
+                </div>
+                <span class="page-number">12 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 13: 來源管理技巧 - 勾選功能 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>來源管理技巧：勾選功能</h1>
+
+                <div class="box info" style="font-size: 20px;">
+                    <strong>關鍵功能：</strong>左側來源列表的勾選框可以控制 AI 參考哪些來源回答！
+                </div>
+
+                <div class="two-column" style="margin-top: 25px;">
+                    <div>
+                        <h3>全選（預設）</h3>
+                        <p>AI 會綜合所有來源回答</p>
+                        <ul>
+                            <li>適合需要全面分析的問題</li>
+                            <li>跨來源比較和整合</li>
+                            <li>尋找共同點或矛盾處</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>部分勾選</h3>
+                        <p>AI 只參考勾選的來源</p>
+                        <ul>
+                            <li>針對特定文件提問</li>
+                            <li>排除不相關的來源</li>
+                            <li>比較特定來源的差異</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="scenario-box" style="margin-top: 25px;">
+                    <h3>實際應用：競品分析</h3>
+                    <p>你的筆記本有 A、B、C 三家競品的資料。想知道 A 公司的定價策略時，只勾選 A 公司的來源，避免混淆。想比較三家時，再全部勾選。</p>
+                </div>
+                <span class="page-number">13 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 14: 來源命名慣例 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>來源管理技巧：命名慣例</h1>
+                <p>好的命名讓你一眼就知道來源內容，也讓 AI 引用時更清晰！</p>
+
+                <div class="two-column" style="margin-top: 20px;">
+                    <div>
+                        <h3>依類型分類</h3>
+                        <div class="naming-example">
+                            <code>[理論] 認知負荷理論.pdf</code>
+                            <code>[案例] Tesla 行銷策略分析.pdf</code>
+                            <code>[數據] 2026 市場調查報告.pdf</code>
+                            <code>[訪談] 客戶A_深度訪談記錄.pdf</code>
+                            <code>[競品] Apple_產品規格.pdf</code>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>依順序編號</h3>
+                        <div class="naming-example">
+                            <code>01_研究背景與動機.pdf</code>
+                            <code>02_文獻回顧.pdf</code>
+                            <code>03_研究方法.pdf</code>
+                            <code>04_數據分析.pdf</code>
+                            <code>05_結論與建議.pdf</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box tip">
+                    <strong>命名技巧：</strong>
+                    <ul style="margin-top: 8px; padding-left: 20px;">
+                        <li>使用方括號 [ ] 作為標籤前綴，方便視覺辨識</li>
+                        <li>編號使用兩位數（01, 02...），確保排序正確</li>
+                        <li>避免過長的檔名，保持在 30 字以內</li>
+                        <li>英文或中文皆可，保持一致即可</li>
+                    </ul>
+                </div>
+                <span class="page-number">14 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 15: 來源品質把關 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>來源管理技巧：品質把關</h1>
+
+                <table class="comparison-table">
+                    <tr>
+                        <th style="width: 20%;">檢查項目</th>
+                        <th style="width: 40%;">高品質來源</th>
+                        <th style="width: 40%;">需改善的來源</th>
+                    </tr>
+                    <tr>
+                        <td><strong>來源可信度</strong></td>
+                        <td>官方文件、學術論文、權威媒體</td>
+                        <td>來路不明的網頁、內容農場</td>
+                    </tr>
+                    <tr>
+                        <td><strong>資訊時效性</strong></td>
+                        <td>最新版本、近期發布</td>
+                        <td>過時資訊、已被更新取代</td>
+                    </tr>
+                    <tr>
+                        <td><strong>內容完整性</strong></td>
+                        <td>完整文章、全文收錄</td>
+                        <td>擷取不完整、內容截斷</td>
+                    </tr>
+                    <tr>
+                        <td><strong>格式可讀性</strong></td>
+                        <td>清晰的文字、良好的結構</td>
+                        <td>OCR 錯誤多、排版混亂</td>
+                    </tr>
+                    <tr>
+                        <td><strong>主題相關性</strong></td>
+                        <td>與研究主題直接相關</td>
+                        <td>邊緣相關或完全無關</td>
+                    </tr>
+                </table>
+
+                <div class="box warning">
+                    <strong>品質把關清單：</strong>加入來源後，點擊來源名稱預覽內容，確認：
+                    <ol style="margin-top: 8px; padding-left: 25px;">
+                        <li>文字是否正確擷取（沒有亂碼）</li>
+                        <li>內容是否完整（沒有截斷）</li>
+                        <li>是否為需要的內容（沒有擷取錯誤區域）</li>
+                    </ol>
+                </div>
+                <span class="page-number">15 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 16: 情境示範 - 競品分析 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>情境示範：競品分析來源選取</h1>
+
+                <div class="scenario-box">
+                    <h3>情境設定</h3>
+                    <p>你要分析三家競品（A、B、C公司）的產品策略，需要整理一份比較報告給主管。</p>
+                </div>
+
+                <h3>來源組織策略</h3>
+                <div class="naming-example" style="margin-top: 15px;">
+                    <p style="color: #333; font-weight: bold; margin-bottom: 10px;">建議的來源命名：</p>
+                    <code>[A公司] 官網產品介紹.pdf</code>
+                    <code>[A公司] 年度報告摘要.pdf</code>
+                    <code>[A公司] 新聞報導彙整.pdf</code>
+                    <code>[B公司] 官網產品介紹.pdf</code>
+                    <code>[B公司] 投資人簡報.pdf</code>
+                    <code>[C公司] 產品規格表.pdf</code>
+                    <code>[C公司] 用戶評價整理.pdf</code>
+                    <code>[產業] 市場趨勢報告.pdf</code>
+                </div>
+
+                <h3 style="margin-top: 20px;">勾選策略應用</h3>
+                <div class="two-column">
+                    <div class="box info">
+                        <strong>單一公司深入分析</strong><br>
+                        只勾選 [A公司] 開頭的來源<br>
+                        提問：「A 公司的核心競爭優勢是什麼？」
+                    </div>
+                    <div class="box success">
+                        <strong>跨公司比較分析</strong><br>
+                        勾選所有來源<br>
+                        提問：「三家公司的定價策略有何差異？」
+                    </div>
+                </div>
+                <span class="page-number">16 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 17: 常見問題排解 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>常見問題與排解</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card">
+                        <h3 style="color: #e74c3c;">來源處理失敗</h3>
+                        <p><strong>可能原因：</strong></p>
+                        <ul style="padding-left: 20px; font-size: 15px;">
+                            <li>檔案過大超過限制</li>
+                            <li>PDF 加密或受保護</li>
+                            <li>網頁需要登入</li>
+                            <li>YouTube 沒有字幕</li>
+                        </ul>
+                        <p style="margin-top: 10px;"><strong>解決方案：</strong>拆分檔案、另存 PDF、使用貼上文字</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3 style="color: #e74c3c;">擷取內容不完整</h3>
+                        <p><strong>可能原因：</strong></p>
+                        <ul style="padding-left: 20px; font-size: 15px;">
+                            <li>動態載入的網頁</li>
+                            <li>PDF 排版複雜</li>
+                            <li>圖片中的文字</li>
+                        </ul>
+                        <p style="margin-top: 10px;"><strong>解決方案：</strong>手動複製貼上、使用其他格式</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3 style="color: #e74c3c;">AI 回答不引用某來源</h3>
+                        <p><strong>可能原因：</strong></p>
+                        <ul style="padding-left: 20px; font-size: 15px;">
+                            <li>該來源未被勾選</li>
+                            <li>來源內容與問題不相關</li>
+                            <li>來源擷取品質差</li>
+                        </ul>
+                        <p style="margin-top: 10px;"><strong>解決方案：</strong>確認勾選狀態、檢查來源內容、重新提問</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3 style="color: #e74c3c;">中文 OCR 錯誤多</h3>
+                        <p><strong>可能原因：</strong></p>
+                        <ul style="padding-left: 20px; font-size: 15px;">
+                            <li>掃描品質不佳</li>
+                            <li>手寫字體</li>
+                            <li>特殊排版格式</li>
+                        </ul>
+                        <p style="margin-top: 10px;"><strong>解決方案：</strong>使用更高解析度掃描、尋找文字版 PDF</p>
+                    </div>
+                </div>
+                <span class="page-number">17 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 18: 最佳實務清單 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>來源管理最佳實務清單</h1>
+
+                <div class="two-column">
+                    <div>
+                        <h3>加入來源前</h3>
+                        <ul class="feature-list">
+                            <li><span class="feature-icon">1</span><div>確認來源的可信度和時效性</div></li>
+                            <li><span class="feature-icon">2</span><div>選擇適當的格式（PDF 優先）</div></li>
+                            <li><span class="feature-icon">3</span><div>準備好清晰的命名</div></li>
+                            <li><span class="feature-icon">4</span><div>移除不必要的頁面或內容</div></li>
+                        </ul>
+
+                        <h3 style="margin-top: 20px;">加入來源後</h3>
+                        <ul class="feature-list">
+                            <li><span class="feature-icon">5</span><div>點擊預覽確認內容完整</div></li>
+                            <li><span class="feature-icon">6</span><div>測試簡單提問確認可用</div></li>
+                            <li><span class="feature-icon">7</span><div>刪除品質不佳的來源</div></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>日常管理</h3>
+                        <ul class="feature-list">
+                            <li><span class="feature-icon">8</span><div>依主題建立不同筆記本</div></li>
+                            <li><span class="feature-icon">9</span><div>定期清理不再需要的來源</div></li>
+                            <li><span class="feature-icon">10</span><div>善用勾選功能聚焦分析</div></li>
+                        </ul>
+
+                        <div class="box success" style="margin-top: 20px;">
+                            <strong>黃金法則</strong><br>
+                            「寧可少而精，不要多而雜」<br>
+                            10 個高品質來源 > 50 個品質參差的來源
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">18 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 19: 本單元重點回顧 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>本單元重點回顧</h1>
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <h3 style="color: white;">來源類型</h3>
+                        <p style="color: rgba(255,255,255,0.95);">
+                            PDF（最可靠）> Google 文件 > URL（需注意限制）> YouTube（需有字幕）> 純文字貼上（最靈活）
+                        </p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        <h3 style="color: white;">URL 三大問題</h3>
+                        <p style="color: rgba(255,255,255,0.95);">
+                            登入牆、動態載入、網頁雜訊<br>
+                            解法：另存 PDF 或手動貼上
+                        </p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                        <h3 style="color: white;">Chrome 擴充程式</h3>
+                        <p style="color: rgba(255,255,255,0.95);">
+                            NotebookLM Quick Add<br>
+                            快捷鍵：Alt + N
+                        </p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                        <h3 style="color: white;">管理技巧</h3>
+                        <p style="color: rgba(255,255,255,0.95);">
+                            勾選控制參考範圍<br>
+                            [標籤] 命名法<br>
+                            品質把關清單
+                        </p>
+                    </div>
+                </div>
+
+                <div class="box success" style="text-align: center; font-size: 20px; margin-top: 25px;">
+                    <strong>核心觀念：來源品質決定產出品質，GIGO！</strong>
+                </div>
+                <span class="page-number">19 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 20: 下一單元預告 -->
+        <div class="slide">
+            <div class="content-card cover-card">
+                <h1 style="font-size: 42px;">下一單元預告</h1>
+                <p class="subtitle" style="font-size: 32px; margin-top: 30px;">
+                    <strong>單元 3：內容生成類型總覽</strong>
+                </p>
+                <p class="subtitle" style="font-size: 18px; margin-top: 25px; line-height: 2;">
+                    全面認識 NotebookLM 的各種產出類型<br>
+                    Podcast、簡報、測驗、閃卡、心智圖...<br>
+                    學習何時該用哪種生成功能<br>
+                    掌握各種工件的客製化技巧
+                </p>
+                <div class="tags" style="margin-top: 40px;">
+                    <span class="tag">Audio Overview</span>
+                    <span class="tag">Briefing Doc</span>
+                    <span class="tag">Study Guide</span>
+                    <span class="tag">Quiz</span>
+                    <span class="tag">Mind Map</span>
+                </div>
+                <div style="margin-top: 50px; display: flex; gap: 20px; justify-content: center;">
+                    <a href="單元目次.html" class="next-unit-btn" style="background: rgba(255,255,255,0.2); color: white; padding: 15px 35px; border-radius: 30px; text-decoration: none; font-size: 18px; font-weight: 600; border: 2px solid rgba(255,255,255,0.4); transition: all 0.3s ease;">回到目次</a>
+                    <a href="單元3-內容生成類型總覽.html" class="next-unit-btn" style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 35px; border-radius: 30px; text-decoration: none; font-size: 18px; font-weight: 600; border: none; box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">下一單元：內容生成類型總覽</a>
+                </div>
+                <span class="page-number" style="color: #666;">20 / 20</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 導航箭頭 -->
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">&#10094;</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">&#10095;</button>
+
+    <!-- 頁碼指示器 -->
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            updateButtons();
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'Home') goToSlide(0);
+            if (e.key === 'End') goToSlide(totalSlides - 1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            container.innerHTML = '';
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(index);
+                container.appendChild(dot);
+            });
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === index);
+            });
+
+            updateButtons();
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        function goToSlide(index) {
+            showSlide(index);
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

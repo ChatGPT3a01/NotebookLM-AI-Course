@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單元 7 - 兩次作業法</title>
+    <style>
+        /* 基礎設定 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* === 導航列 === */
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .nav-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .nav-buttons { display: flex; gap: 12px; }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* === 導航箭頭 === */
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* === 投影片容器 === */
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            padding-top: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 20;
+        }
+
+        /* === 內容卡片 === */
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 45px 55px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* === 封面特殊樣式 === */
+        .cover-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(160deg, #0a0a1a 0%, #1a1a3e 40%, #0f2847 70%, #0a1628 100%);
+            color: white;
+        }
+
+        .cover-card .unit-badge {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            border-radius: 30px;
+            padding: 10px 30px;
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            color: #a29bfe;
+        }
+
+        .cover-card h1 {
+            font-size: 52px;
+            background: linear-gradient(90deg, #fff 0%, #a29bfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .cover-card .subtitle {
+            font-size: 24px;
+            color: #a0a0b0;
+            max-width: 700px;
+            line-height: 1.6;
+        }
+
+        .cover-card .tags {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cover-card .tag {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #b0b0c0;
+        }
+
+        /* 其他通用樣式 */
+        h1 { color: #1a1a2e; font-size: 38px; margin-bottom: 20px; border-bottom: 4px solid #667eea; padding-bottom: 12px; }
+        h2 { color: #16213e; font-size: 28px; margin: 25px 0 15px 0; }
+        h3 { color: #0f3460; font-size: 22px; margin: 20px 0 12px 0; }
+        p, li { font-size: 18px; line-height: 1.85; color: #444; margin-bottom: 12px; }
+        ul, ol { padding-left: 25px; }
+        li { margin-bottom: 10px; }
+
+        code {
+            background: #f0f2f5;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            color: #e74c3c;
+            font-size: 0.95em;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #667eea 0%, #764ba2 100%);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .box {
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 5px solid;
+            font-size: 17px;
+        }
+        .info { background: #e3f2fd; border-color: #2196f3; color: #0d47a1; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .tip { background: #f3e5f5; border-color: #9c27b0; color: #4a148c; }
+        .example { background: #e8f5e9; border-color: #4caf50; color: #1b5e20; }
+
+        /* 提示詞區塊 - prompt-box */
+        .prompt-box {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            position: relative;
+            border: 1px solid #444;
+        }
+        .prompt-box::before {
+            content: 'Prompt';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .prompt-box p {
+            color: #4ade80;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 16px;
+            line-height: 1.8;
+            margin: 10px 0 0 0;
+        }
+        .prompt-box .comment {
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        /* 情境卡片 - scenario-box */
+        .scenario-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            color: white;
+        }
+        .scenario-box h3 {
+            color: white;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .scenario-box p {
+            color: rgba(255,255,255,0.95);
+            font-size: 17px;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        .concept-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .concept-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .concept-card h3 {
+            color: #1a1a2e;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+        }
+        .concept-card p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 0;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .feature-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        /* step-box 步驟區塊 */
+        .step-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 18px;
+            padding: 18px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-content strong {
+            color: #1a1a2e;
+            font-size: 18px;
+        }
+        .step-content p {
+            margin: 8px 0 0 0;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .comparison-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 700;
+        }
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .indicators {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 4000;
+            padding: 12px 25px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 30px;
+            backdrop-filter: blur(8px);
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dot:hover {
+            background: rgba(255,255,255,0.7);
+        }
+        .dot.active {
+            background: #a29bfe;
+            transform: scale(1.3);
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            right: 25px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* 滾動條美化 */
+        .content-card::-webkit-scrollbar {
+            width: 8px;
+        }
+        .content-card::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        /* 作業標籤 */
+        .task-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .task-badge.task-1 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .task-badge.task-2 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        /* 大綱範例區塊 */
+        .outline-example {
+            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            border: 1px solid #444;
+        }
+        .outline-example code {
+            display: block;
+            background: transparent;
+            color: #4ade80;
+            font-size: 15px;
+            padding: 3px 0;
+            line-height: 1.6;
+        }
+        .outline-example .label {
+            color: #a29bfe;
+        }
+        .outline-example .comment {
+            color: #6b7280;
+        }
+
+        /* 流程箭頭 */
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+        .flow-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .flow-arrow {
+            color: #667eea;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        /* 資源連結區塊 */
+        .resource-box {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-radius: 15px;
+            padding: 20px 25px;
+            margin: 20px 0;
+            border-left: 5px solid #4caf50;
+        }
+        .resource-box h4 {
+            color: #2e7d32;
+            margin: 0 0 12px 0;
+            font-size: 18px;
+        }
+        .resource-box a {
+            color: #1565c0;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .resource-box a:hover {
+            text-decoration: underline;
+        }
+
+        /* 勾選清單 */
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 17px;
+        }
+        .checklist .check {
+            color: #4caf50;
+            font-size: 20px;
+        }
+        .checklist .uncheck {
+            color: #9e9e9e;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 導航列 -->
+    <div class="nav-bar">
+        <div class="nav-title">單元 7 - 兩次作業法</div>
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="goToSlide(0)">首頁</button>
+            <button class="nav-btn" onclick="toggleFullscreen()">全螢幕</button>
+            <a href="單元目次.html" class="nav-btn">目次</a>
+            <a href="https://www.facebook.com/groups/2754139931432955" target="_blank" class="nav-btn">FB</a>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">YT</a>
+            <a href="https://3atechnology.com" target="_blank" class="nav-btn">3A科技</a>
+        </div>
+    </div>
+
+    <!-- 投影片內容 -->
+    <div class="slide-container">
+
+        <!-- Slide 1: 封面 -->
+        <div class="slide active">
+            <div class="content-card cover-card">
+                <div class="unit-badge">第二部分：簡報生成篇</div>
+                <h1>兩次作業法</h1>
+                <p class="subtitle">先求大綱、再求生成<br>把「內容規劃」和「視覺生成」分開處理的進階技巧</p>
+                <div class="tags">
+                    <span class="tag">分而治之</span>
+                    <span class="tag">第一次作業：大綱</span>
+                    <span class="tag">第二次作業：生成</span>
+                    <span class="tag">品質穩定</span>
+                    <span class="tag">可控性高</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 為什麼需要兩次作業法 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>為什麼需要兩次作業法？</h1>
+                <div class="scenario-box">
+                    <h3>常見困境</h3>
+                    <p>當來源資料很多、內容很複雜時，NotebookLM 生成的簡報常常會「跑版」——背景套用不準確、內容分配不均勻、或者重點沒有抓對。</p>
+                </div>
+
+                <h2>一次到位的困境</h2>
+                <p>當你直接把大量來源資料丟給 NotebookLM，要求它「生成簡報並套用模板」時，AI 需要同時處理三件事：</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="concept-card" style="text-align: center;">
+                        <h3>1. 理解內容</h3>
+                        <p>消化所有來源<br>抓出重點</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3>2. 規劃結構</h3>
+                        <p>決定簡報分幾頁<br>每頁放什麼</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3>3. 套用視覺</h3>
+                        <p>把內容放到<br>正確的模板上</p>
+                    </div>
+                </div>
+
+                <div class="box warning" style="margin-top: 20px;">
+                    <strong>結果往往是：</strong>每件事都做了，但每件事都做得不夠好！
+                </div>
+                <span class="page-number">2 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 3: 分而治之的智慧 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>分而治之的智慧</h1>
+                <p style="font-size: 20px; margin-bottom: 25px;">兩次作業法的精髓是「分而治之」：</p>
+
+                <div class="two-column">
+                    <div class="concept-card" style="border-top: 5px solid #f5576c;">
+                        <span class="task-badge task-1">第一次作業</span>
+                        <h3>專注於「內容」</h3>
+                        <p>讓 AI 先規劃好簡報大綱，決定每一頁要講什麼</p>
+                        <div class="box info" style="margin-top: 15px; padding: 12px;">
+                            <strong>目標：</strong>產出結構穩定的純文字大綱
+                        </div>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #00f2fe;">
+                        <span class="task-badge task-2">第二次作業</span>
+                        <h3>專注於「視覺」</h3>
+                        <p>根據已經確定的大綱，套用模板生成簡報</p>
+                        <div class="box info" style="margin-top: 15px; padding: 12px;">
+                            <strong>目標：</strong>把大綱內容放到正確的模板上
+                        </div>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 30px;">這樣做的好處</h2>
+                <ul>
+                    <li>第一次作業時，AI 可以<span class="highlight">全神貫注在內容邏輯</span>上</li>
+                    <li>第二次作業時，AI 已經知道每頁要放什麼，只需要<span class="highlight">專心處理視覺呈現</span></li>
+                    <li>你可以在兩次作業之間介入，<span class="highlight">調整大綱</span>，確保方向正確</li>
+                </ul>
+
+                <div class="box success">
+                    <strong>核心心法：</strong>就像「先寫講稿，再做投影片」——這本來就是專業簡報製作的標準流程！
+                </div>
+                <span class="page-number">3 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 4: 兩次作業法流程圖 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>兩次作業法完整流程</h1>
+
+                <div class="flow-diagram">
+                    <div class="flow-item">原始資料</div>
+                    <span class="flow-arrow">&#10132;</span>
+                    <div class="flow-item" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">第一次作業<br>生成大綱</div>
+                    <span class="flow-arrow">&#10132;</span>
+                    <div class="flow-item" style="background: #4caf50;">人工檢視<br>調整大綱</div>
+                    <span class="flow-arrow">&#10132;</span>
+                    <div class="flow-item" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">第二次作業<br>生成簡報</div>
+                    <span class="flow-arrow">&#10132;</span>
+                    <div class="flow-item">完成簡報</div>
+                </div>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 30px;">
+                    <div class="concept-card">
+                        <h3>第一次作業產出</h3>
+                        <ul style="font-size: 16px;">
+                            <li>頁數規劃</li>
+                            <li>每頁的標題</li>
+                            <li>每頁的重點內容（條列式）</li>
+                            <li>每頁適合的版型建議</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h3>第二次作業產出</h3>
+                        <ul style="font-size: 16px;">
+                            <li>完整的視覺簡報</li>
+                            <li>正確套用背景模板</li>
+                            <li>文字排版精準</li>
+                            <li>整體風格一致</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box tip" style="margin-top: 25px;">
+                    <strong>關鍵差異：</strong>大綱成為來源！當大綱變成「來源」後，AI 可以同時參考大綱和背景圖片，確保內容與視覺精準配合。
+                </div>
+                <span class="page-number">4 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 5: 第一次作業 - 目標 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="task-badge task-1">第一次作業</span>
+                <h1>先求大綱</h1>
+
+                <h2>目標</h2>
+                <p style="font-size: 20px;">產出一份「結構穩定的純文字簡報大綱」，包含：</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="concept-card" style="text-align: center;">
+                        <h3 style="font-size: 48px; margin-bottom: 10px;">1</h3>
+                        <p><strong>頁數規劃</strong><br>總共幾頁</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3 style="font-size: 48px; margin-bottom: 10px;">2</h3>
+                        <p><strong>每頁標題</strong><br>清楚的主題</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3 style="font-size: 48px; margin-bottom: 10px;">3</h3>
+                        <p><strong>重點內容</strong><br>條列式呈現</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3 style="font-size: 48px; margin-bottom: 10px;">4</h3>
+                        <p><strong>版型建議</strong><br>適合的版面</p>
+                    </div>
+                </div>
+
+                <div class="scenario-box" style="margin-top: 30px;">
+                    <h3>為什麼大綱如此重要？</h3>
+                    <p>大綱就是你的「設計圖」，就像蓋房子要先畫設計圖才不會蓋歪。有了完整的大綱，接下來的生成工作都會根據它來進行，大幅提升成功率！</p>
+                </div>
+                <span class="page-number">5 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 6: 第一次作業 - 步驟一 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="task-badge task-1">第一次作業</span>
+                <h1>步驟一：準備內容來源</h1>
+
+                <p style="font-size: 19px;">首先，把你要製作簡報的原始資料上傳到 NotebookLM。這可能包括：</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="concept-card">
+                        <h3>研究報告</h3>
+                        <p>PDF、學術論文、市場調查報告</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>會議記錄</h3>
+                        <p>會議逐字稿、討論筆記</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>專案文件</h3>
+                        <p>企劃書、規格書、進度報告</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>參考資料</h3>
+                        <p>網頁文章、YouTube 影片</p>
+                    </div>
+                </div>
+
+                <div class="box success" style="margin-top: 25px;">
+                    <strong>重點確認：</strong>確保這些來源涵蓋了簡報需要的所有資訊。來源品質決定大綱品質！
+                </div>
+
+                <div class="box info">
+                    <strong>小技巧：</strong>如果資料太多太雜，可以在生成大綱時只勾選最核心的來源，避免 AI 迷失在資訊海洋中。
+                </div>
+                <span class="page-number">6 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 7: 第一次作業 - 步驟二（基本版） -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="task-badge task-1">第一次作業</span>
+                <h1>步驟二：生成大綱</h1>
+
+                <h2>基本版大綱提示詞</h2>
+                <div class="prompt-box">
+                    <p>請根據來源資料，為我規劃一份簡報大綱。</p>
+                    <p></p>
+                    <p>要求：</p>
+                    <p>1. 簡報總頁數約 12-15 頁</p>
+                    <p>2. 包含封面、目錄、主要內容、結論</p>
+                    <p>3. 每頁列出：頁碼、標題、3-5 個重點</p>
+                    <p>4. 使用條列式格式，清楚標示每頁內容</p>
+                    <p></p>
+                    <p>請直接輸出大綱，不需要其他說明。</p>
+                </div>
+
+                <div class="box tip">
+                    <strong>適用情境：</strong>快速生成初版大綱，適合時間緊迫或內容較簡單的情況。
+                </div>
+                <span class="page-number">7 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 8: 第一次作業 - 步驟二（進階版） -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="task-badge task-1">第一次作業</span>
+                <h1>進階版大綱提示詞</h1>
+
+                <div class="prompt-box" style="font-size: 15px;">
+                    <p>請根據來源資料，為我規劃一份詳細的簡報大綱。</p>
+                    <p></p>
+                    <p>格式要求：</p>
+                    <p>- 每頁使用以下格式：</p>
+                    <p>  頁碼. [頁面類型] 標題</p>
+                    <p>  - 重點一</p>
+                    <p>  - 重點二</p>
+                    <p>  - 重點三</p>
+                    <p>  建議版型：XXX</p>
+                    <p></p>
+                    <p>頁面類型包括：</p>
+                    <p>- [封面] 用於第一頁</p>
+                    <p>- [目錄] 用於大綱頁</p>
+                    <p>- [章節] 用於章節開頭</p>
+                    <p>- [內容] 用於一般內容頁</p>
+                    <p>- [數據] 用於有圖表的頁面</p>
+                    <p>- [結論] 用於總結頁</p>
+                    <p></p>
+                    <p>請規劃約 15 頁的簡報，確保內容邏輯流暢、重點明確。</p>
+                </div>
+
+                <div class="box success">
+                    <strong>優勢：</strong>包含版型建議，讓第二次作業時 AI 更容易選擇正確的背景模板！
+                </div>
+                <span class="page-number">8 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 9: 第一次作業 - 步驟三 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="task-badge task-1">第一次作業</span>
+                <h1>步驟三：檢視並調整大綱</h1>
+
+                <p style="font-size: 19px;">AI 生成的大綱會顯示在聊天介面中。仔細閱讀這份大綱：</p>
+
+                <h2>檢查項目</h2>
+                <div class="concept-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="concept-card">
+                        <h3>結構合理？</h3>
+                        <p>章節劃分是否清楚？邏輯順序是否正確？</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>重點正確？</h3>
+                        <p>有沒有遺漏重要資訊？有沒有錯誤？</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>頁數適當？</h3>
+                        <p>內容分配是否均勻？會不會太多或太少？</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>邏輯流暢？</h3>
+                        <p>前後頁之間是否有連貫性？</p>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 25px;">如果需要調整</h2>
+                <p>可以繼續對話，請 AI 修改特定部分：</p>
+                <div class="prompt-box">
+                    <p>「第 5 頁的內容太少，請擴充」</p>
+                    <p>「請把第 8 和第 9 頁合併」</p>
+                    <p>「第 3 章節需要再增加一頁說明案例」</p>
+                    <p>「請把結論的重點調整為行動建議」</p>
+                </div>
+                <span class="page-number">9 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 10: 第一次作業 - 步驟四 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="task-badge task-1">第一次作業</span>
+                <h1>步驟四：確認並儲存大綱</h1>
+
+                <p style="font-size: 19px;">當你對大綱滿意後，把它複製出來保存。</p>
+
+                <h2>建議的大綱格式範例</h2>
+                <div class="outline-example">
+                    <code><span class="label">01. [封面]</span> AI 在教育領域的應用</code>
+                    <code>    - 副標題：2026 年趨勢報告</code>
+                    <code>    - 報告者：XXX</code>
+                    <code>    - 日期：2026 年 2 月</code>
+                    <code>    <span class="comment">建議版型：封面頁</span></code>
+                    <code></code>
+                    <code><span class="label">02. [目錄]</span> 報告大綱</code>
+                    <code>    - AI 教育的現況</code>
+                    <code>    - 主要應用場景</code>
+                    <code>    - 成功案例分析</code>
+                    <code>    - 挑戰與機會</code>
+                    <code>    <span class="comment">建議版型：目錄頁</span></code>
+                    <code></code>
+                    <code><span class="label">03. [章節]</span> 第一章：AI 教育的現況</code>
+                    <code>    <span class="comment">建議版型：章節頁</span></code>
+                </div>
+
+                <div class="box success">
+                    <strong>這份大綱就是你的「設計圖」！</strong>接下來的生成工作都會根據它來進行。
+                </div>
+                <span class="page-number">10 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 11: 第二次作業 - 目標 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="task-badge task-2">第二次作業</span>
+                <h1>再求生成</h1>
+
+                <h2>目標</h2>
+                <p style="font-size: 20px;">根據已確定的大綱，結合模板背景，生成最終的簡報。</p>
+
+                <div class="scenario-box" style="margin-top: 25px;">
+                    <h3>關鍵轉變</h3>
+                    <p>這是兩次作業法的核心：<strong>把大綱文字變成 NotebookLM 的來源</strong>。當大綱成為「來源」後，你可以在生成簡報時，讓 AI 同時參考大綱來源和背景圖片來源！</p>
+                </div>
+
+                <div class="flow-diagram" style="margin-top: 30px;">
+                    <div class="flow-item">確認好的大綱</div>
+                    <span class="flow-arrow">&#10132;</span>
+                    <div class="flow-item" style="background: #4caf50;">貼上成為來源</div>
+                    <span class="flow-arrow">&#10132;</span>
+                    <div class="flow-item">結合背景模板</div>
+                    <span class="flow-arrow">&#10132;</span>
+                    <div class="flow-item" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">精準生成簡報</div>
+                </div>
+                <span class="page-number">11 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 12: 第二次作業 - 步驟一 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="task-badge task-2">第二次作業</span>
+                <h1>步驟一：將大綱轉為來源</h1>
+
+                <div class="step-box">
+                    <span class="step-number">1</span>
+                    <div class="step-content">
+                        <strong>在 NotebookLM 中，點擊「新增來源」</strong>
+                        <p>選擇來源類型</p>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">2</span>
+                    <div class="step-content">
+                        <strong>選擇「貼上文字」</strong>
+                        <p>這是最直接的方式</p>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">3</span>
+                    <div class="step-content">
+                        <strong>把剛才確認好的大綱全文貼上</strong>
+                        <p>包含所有頁碼、標題、重點、版型建議</p>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">4</span>
+                    <div class="step-content">
+                        <strong>給這個來源命名</strong>
+                        <p>例如：「00_簡報架構」或「簡報大綱」</p>
+                    </div>
+                </div>
+
+                <div class="box info" style="margin-top: 20px;">
+                    <strong>為什麼要這樣做？</strong>因為當大綱成為「來源」後，你可以在生成簡報時，讓 AI 同時參考大綱來源和背景圖片來源，確保內容和視覺能夠精準配合。
+                </div>
+                <span class="page-number">12 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 13: 第二次作業 - 步驟二 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="task-badge task-2">第二次作業</span>
+                <h1>步驟二：確認所有來源就位</h1>
+
+                <p style="font-size: 19px;">在進行第二次作業前，確認你的 NotebookLM 筆記本中有以下來源：</p>
+
+                <div class="two-column" style="margin-top: 25px;">
+                    <div>
+                        <h3 style="color: #4caf50;">必要來源</h3>
+                        <ul class="checklist">
+                            <li><span class="check">&#10004;</span> 簡報大綱（剛才貼上的文字）</li>
+                            <li><span class="check">&#10004;</span> 背景模板圖片（封面頁.png、內文頁.png 等）</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 style="color: #9e9e9e;">選擇性來源</h3>
+                        <ul class="checklist">
+                            <li><span class="uncheck">&#9744;</span> 原始資料（如果需要 AI 補充細節）</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box warning" style="margin-top: 25px;">
+                    <strong>重要提醒：</strong>背景模板圖片的命名非常關鍵！請確保使用有意義的名稱，如「封面頁.png」、「內文頁_左圖右文.png」等。
+                </div>
+
+                <div class="box tip">
+                    <strong>複習：</strong>如何準備背景模板圖片，請參考「單元6 - 簡報模板套用三階段法」。
+                </div>
+                <span class="page-number">13 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 14: 第二次作業 - 步驟三 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="task-badge task-2">第二次作業</span>
+                <h1>步驟三：選擇正確的來源組合</h1>
+
+                <p style="font-size: 19px;">這一步很重要。在生成簡報時，<strong>勾選你要 AI 參考的來源</strong>。</p>
+
+                <div class="two-column" style="margin-top: 20px;">
+                    <div class="concept-card" style="border-top: 5px solid #4caf50;">
+                        <h3>策略 A：精準套版（推薦）</h3>
+                        <p>只勾選「簡報大綱」和「背景模板圖片」</p>
+                        <div class="box success" style="margin-top: 15px; padding: 12px;">
+                            <strong>優點：</strong>讓 AI 專注於「把大綱內容放到模板上」，不會被原始資料的大量資訊干擾。
+                        </div>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #ff9800;">
+                        <h3>策略 B：保留細節補充</h3>
+                        <p>勾選「簡報大綱」、「背景模板圖片」，以及「部分原始資料」</p>
+                        <div class="box warning" style="margin-top: 15px; padding: 12px;">
+                            <strong>注意：</strong>來源越多，AI 越可能「自作主張」偏離大綱。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box info" style="margin-top: 20px;">
+                    <strong>建議：</strong>大多數情況下使用策略 A 即可。因為內容已經在大綱中整理好了，不需要再參考原始資料。
+                </div>
+                <span class="page-number">14 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 15: 第二次作業 - 步驟四 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="task-badge task-2">第二次作業</span>
+                <h1>步驟四：下達精準的生成指令</h1>
+
+                <h2>兩次作業法專用提示詞</h2>
+                <div class="prompt-box" style="font-size: 15px;">
+                    <p>請根據「簡報大綱」來源的內容，生成一份完整的簡報。</p>
+                    <p></p>
+                    <p><strong>嚴格要求：</strong></p>
+                    <p>1. 必須完全遵循大綱中的頁數、標題和內容結構</p>
+                    <p>2. 不可自行增加或刪減頁面</p>
+                    <p>3. 每頁內容必須與大綱一致，不可擅自改寫</p>
+                    <p></p>
+                    <p><strong>背景圖片使用規則：</strong></p>
+                    <p>1. 使用來源中的背景圖片作為投影片背景</p>
+                    <p>2. 根據大綱中的「建議版型」選擇對應的背景圖片</p>
+                    <p>3. 例如：大綱標示「封面頁」就使用「封面頁.png」</p>
+                    <p>4. 內文頁請輪流使用不同版型的背景</p>
+                    <p></p>
+                    <p><strong>視覺規則：</strong></p>
+                    <p>1. 文字使用思源黑體</p>
+                    <p>2. 確保文字放在背景的留白區域</p>
+                    <p>3. 如需要，可在文字底部加上半透明色塊提高可讀性</p>
+                    <p></p>
+                    <p>請開始生成簡報。</p>
+                </div>
+                <span class="page-number">15 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 16: 第二次作業 - 步驟五 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="task-badge task-2">第二次作業</span>
+                <h1>步驟五：檢視與微調</h1>
+
+                <p style="font-size: 19px;">生成完成後，逐頁檢視結果：</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="concept-card" style="text-align: center;">
+                        <h3>內容一致？</h3>
+                        <p>每頁內容是否與大綱一致？</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3>背景正確？</h3>
+                        <p>是否正確套用對應的模板？</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3>文字位置？</h3>
+                        <p>文字是否放在恰當的區域？</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3>整體流暢？</h3>
+                        <p>風格是否統一連貫？</p>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 25px;">如果某些頁面不滿意</h2>
+                <div class="prompt-box">
+                    <p>「請重新生成第 5 頁，使用內文頁_左圖右文.png 作為背景」</p>
+                    <p>「第 8 頁的文字太多，請精簡到 4 個重點」</p>
+                    <p>「請調整第 3 頁的標題位置，放在上方」</p>
+                </div>
+
+                <div class="box success">
+                    <strong>完成！</strong>生成的簡報會完全符合你的大綱結構，背景正確套用，內容清晰。
+                </div>
+                <span class="page-number">16 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 17: 進階技巧一 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>進階技巧</h1>
+                <h2>技巧一：在大綱中嵌入視覺指令</h2>
+
+                <p style="font-size: 19px;">除了內容，你還可以在大綱中直接註明視覺需求：</p>
+
+                <div class="outline-example">
+                    <code><span class="label">07. [數據]</span> 各年齡層使用率比較</code>
+                    <code>    - 18-24 歲：78%</code>
+                    <code>    - 25-34 歲：65%</code>
+                    <code>    - 35-44 歲：52%</code>
+                    <code>    - 45 歲以上：31%</code>
+                    <code>    <span class="comment">建議版型：圖表頁</span></code>
+                    <code>    <span class="label">視覺要求：使用水平條形圖，由高到低排序，使用藍色漸層</span></code>
+                </div>
+
+                <div class="box success" style="margin-top: 20px;">
+                    <strong>效果：</strong>當 AI 看到這樣的大綱，它會更清楚知道這一頁應該如何呈現視覺元素！
+                </div>
+
+                <div class="box tip">
+                    <strong>可嵌入的視覺指令：</strong>
+                    <ul style="margin-top: 10px;">
+                        <li>圖表類型（柱狀圖、圓餅圖、折線圖）</li>
+                        <li>配色建議（使用藍色系、暖色調）</li>
+                        <li>排列方式（由大到小、時間順序）</li>
+                        <li>強調重點（用紅色標示最高數值）</li>
+                    </ul>
+                </div>
+                <span class="page-number">17 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 18: 進階技巧二 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>技巧二：用 AI Studio 預處理大綱</h1>
+
+                <p style="font-size: 19px;">如果你想要更精細地控制大綱品質，可以先用 Google AI Studio（或 ChatGPT、Claude）來生成和優化大綱。</p>
+
+                <div class="flow-diagram">
+                    <div class="flow-item">原始資料</div>
+                    <span class="flow-arrow">&#10132;</span>
+                    <div class="flow-item" style="background: #ff5722;">上傳到 AI Studio</div>
+                    <span class="flow-arrow">&#10132;</span>
+                    <div class="flow-item">生成初稿大綱</div>
+                    <span class="flow-arrow">&#10132;</span>
+                    <div class="flow-item" style="background: #4caf50;">人工多次修改</div>
+                    <span class="flow-arrow">&#10132;</span>
+                    <div class="flow-item" style="background: #2196f3;">完美大綱</div>
+                    <span class="flow-arrow">&#10132;</span>
+                    <div class="flow-item">貼到 NotebookLM</div>
+                </div>
+
+                <h3 style="margin-top: 25px;">這樣做的好處</h3>
+                <div class="two-column">
+                    <div>
+                        <ul>
+                            <li>AI Studio 通常有更強的文字生成能力</li>
+                            <li>你可以多次迭代，直到大綱完美</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <ul>
+                            <li>最後 NotebookLM 只需要專心處理「大綱轉簡報」的轉換</li>
+                            <li>分工明確，各司其職</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="resource-box" style="margin-top: 20px;">
+                    <h4>延伸工具推薦</h4>
+                    <p>NotebookLM 可與 <strong>Gamma</strong>、<strong>Napkin</strong> 等工具結合使用，打造更強大的簡報製作流程！</p>
+                </div>
+                <span class="page-number">18 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 19: 進階技巧三四 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>技巧三 & 四</h1>
+
+                <div class="two-column">
+                    <div class="concept-card" style="border-top: 5px solid #9c27b0;">
+                        <h3>技巧三：分批生成長簡報</h3>
+                        <p>如果你的簡報超過 20 頁，建議分批生成：</p>
+                        <ol style="font-size: 16px; margin-top: 15px;">
+                            <li>把大綱拆成 2-3 個部分</li>
+                            <li>分別生成每個部分</li>
+                            <li>最後人工整合</li>
+                        </ol>
+                        <div class="box info" style="margin-top: 15px; padding: 12px;">
+                            <strong>好處：</strong>確保每個部分的品質，避免長簡報在後段品質下降。
+                        </div>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #ff9800;">
+                        <h3>技巧四：建立大綱模板庫</h3>
+                        <p>如果你經常製作類似類型的簡報，可以建立「大綱模板」：</p>
+                        <div class="outline-example" style="margin-top: 15px; font-size: 13px;">
+                            <code>01. [封面] XX 專案週報 - 第 N 週</code>
+                            <code>02. [目錄] 本週摘要</code>
+                            <code>03. [內容] 上週待辦完成狀況</code>
+                            <code>04. [數據] 本週關鍵指標</code>
+                            <code>05. [內容] 本週主要進展</code>
+                            <code>06. [內容] 遇到的問題與解決</code>
+                            <code>07. [內容] 下週計畫</code>
+                            <code>08. [結論] 需要支援事項</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box success" style="margin-top: 20px;">
+                    <strong>效率提升：</strong>每次製作週報時，只需要填入具體內容，大綱結構已經固定，大幅提升效率！
+                </div>
+                <span class="page-number">19 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 20: 兩次作業法 vs 一次作業法 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>兩次作業法 vs 一次作業法</h1>
+
+                <table class="comparison-table">
+                    <tr>
+                        <th style="width: 20%;">比較面向</th>
+                        <th style="width: 40%;">一次作業法</th>
+                        <th style="width: 40%;">兩次作業法</th>
+                    </tr>
+                    <tr>
+                        <td><strong>速度</strong></td>
+                        <td>較快（一次完成）</td>
+                        <td>較慢（需兩次）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>品質穩定性</strong></td>
+                        <td>較不穩定</td>
+                        <td style="color: #4caf50; font-weight: bold;">較穩定</td>
+                    </tr>
+                    <tr>
+                        <td><strong>適合簡報長度</strong></td>
+                        <td>10 頁以內</td>
+                        <td style="color: #4caf50; font-weight: bold;">任何長度</td>
+                    </tr>
+                    <tr>
+                        <td><strong>適合內容複雜度</strong></td>
+                        <td>簡單內容</td>
+                        <td style="color: #4caf50; font-weight: bold;">複雜內容</td>
+                    </tr>
+                    <tr>
+                        <td><strong>可控性</strong></td>
+                        <td>較低</td>
+                        <td style="color: #4caf50; font-weight: bold;">較高（可中間介入調整）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>學習曲線</strong></td>
+                        <td style="color: #4caf50; font-weight: bold;">低</td>
+                        <td>中</td>
+                    </tr>
+                </table>
+
+                <div class="box tip" style="margin-top: 20px;">
+                    <strong>選擇建議：</strong>
+                    <ul style="margin-top: 10px;">
+                        <li>快速製作簡單簡報 &#8594; 用一次作業法</li>
+                        <li>重要的正式簡報 &#8594; 用兩次作業法</li>
+                        <li>內容很多、結構複雜 &#8594; 一定要用兩次作業法</li>
+                    </ul>
+                </div>
+                <span class="page-number">20 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 21: 實戰案例 - 情境 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>實戰案例：從研究報告到專業簡報</h1>
+
+                <div class="scenario-box">
+                    <h3>情境</h3>
+                    <p>你有一份 30 頁的「AI 教育應用研究報告」PDF，需要製作一份 15 頁的簡報，用於下週的部門會議。公司有標準的簡報模板（已按上一單元的方法準備好）。</p>
+                </div>
+
+                <h2 style="margin-top: 25px;">第一次作業：生成大綱</h2>
+                <p><strong>上傳來源：</strong>AI 教育應用研究報告.pdf</p>
+
+                <div class="prompt-box" style="font-size: 15px;">
+                    <p>請根據這份研究報告，為我規劃一份 15 頁的部門會議簡報大綱。</p>
+                    <p></p>
+                    <p>目標受眾：部門同事（非技術背景）</p>
+                    <p>簡報目的：分享研究發現，討論可能的應用方向</p>
+                    <p>時間限制：20 分鐘報告</p>
+                    <p></p>
+                    <p>請使用以下格式：</p>
+                    <p>頁碼. [頁面類型] 標題</p>
+                    <p>- 重點一</p>
+                    <p>- 重點二</p>
+                    <p>- 重點三</p>
+                    <p>建議版型：XXX</p>
+                    <p></p>
+                    <p>頁面類型：封面、目錄、章節、內容、數據、結論</p>
+                </div>
+                <span class="page-number">21 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 22: 實戰案例 - 執行 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>實戰案例：執行第二次作業</h1>
+
+                <h2>AI 生成的大綱（節錄）</h2>
+                <div class="outline-example" style="font-size: 14px;">
+                    <code>01. [封面] AI 教育應用趨勢報告 - 2026 年度研究成果分享</code>
+                    <code>02. [目錄] 今天的分享內容</code>
+                    <code>03. [章節] Part 1: 為什麼要關注？</code>
+                    <code>04. [數據] AI 教育市場爆發性成長</code>
+                    <code>... <span class="comment">（共 15 頁）</span></code>
+                </div>
+
+                <p style="margin-top: 15px;"><strong>人工調整：</strong>檢視大綱後，發現第 10 頁和第 11 頁內容重複，請 AI 合併並補充其他內容。</p>
+
+                <h2 style="margin-top: 20px;">第二次作業：生成簡報</h2>
+                <div class="two-column">
+                    <div>
+                        <h3>勾選的來源</h3>
+                        <ul class="checklist" style="font-size: 15px;">
+                            <li><span class="check">&#10004;</span> 簡報大綱</li>
+                            <li><span class="check">&#10004;</span> 封面頁.png</li>
+                            <li><span class="check">&#10004;</span> 目錄頁.png</li>
+                            <li><span class="check">&#10004;</span> 章節頁.png</li>
+                            <li><span class="check">&#10004;</span> 內文頁_左圖右文.png</li>
+                            <li><span class="check">&#10004;</span> 圖表頁.png</li>
+                            <li><span class="check">&#10004;</span> 結論頁.png</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>不勾選的來源</h3>
+                        <ul class="checklist" style="font-size: 15px;">
+                            <li><span class="uncheck">&#9744;</span> AI 教育應用研究報告.pdf（避免干擾）</li>
+                        </ul>
+                        <div class="box success" style="margin-top: 15px; padding: 12px;">
+                            <strong>結果：</strong>生成的簡報完全符合大綱結構，背景正確套用，內容清晰！
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">22 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 23: 本章小結 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>本單元重點回顧</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        <h3 style="color: white;">第一次作業：先求大綱</h3>
+                        <p style="color: rgba(255,255,255,0.95);">
+                            讓 AI 專注於內容規劃<br>
+                            產出結構清晰的純文字大綱<br>
+                            人工檢視並調整<br>
+                            確認後轉為來源
+                        </p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                        <h3 style="color: white;">第二次作業：再求生成</h3>
+                        <p style="color: rgba(255,255,255,0.95);">
+                            把大綱轉為來源<br>
+                            結合模板背景<br>
+                            用精準的提示詞生成簡報<br>
+                            內容與視覺精準配合
+                        </p>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 25px;">適用情境</h2>
+                <ul>
+                    <li>內容複雜的長簡報</li>
+                    <li>需要高品質的正式簡報</li>
+                    <li>套用模板的成功率不高時</li>
+                </ul>
+
+                <div class="box success" style="margin-top: 20px; text-align: center; font-size: 20px;">
+                    <strong>核心心法：就像蓋房子要先畫設計圖，做簡報要先確定大綱。<br>當「內容」和「視覺」分開處理，兩者都能做得更好！</strong>
+                </div>
+
+                <div class="resource-box" style="margin-top: 15px;">
+                    <h4>延伸資源</h4>
+                    <p>茶米老師的講義：<a href="https://bit.ly/trynotebooklm" target="_blank">https://bit.ly/trynotebooklm</a></p>
+                    <p style="margin-top: 8px;"><strong>VK 設計的練習：</strong>下載《納瓦爾寶典》上傳 NotebookLM 創建虛擬納瓦爾</p>
+                    <p style="margin-top: 8px;"><strong>跨域、跨時空激盪想法：</strong>當蘇東坡遇見賈伯斯</p>
+                </div>
+                <span class="page-number">23 / 24</span>
+            </div>
+        </div>
+
+        <!-- Slide 24: 下一單元預告 -->
+        <div class="slide">
+            <div class="content-card cover-card">
+                <h1 style="font-size: 42px;">下一單元預告</h1>
+                <p class="subtitle" style="font-size: 32px; margin-top: 30px;">
+                    <strong>單元 8：為什麼 PDF 無法直接編輯</strong>
+                </p>
+                <p class="subtitle" style="font-size: 18px; margin-top: 25px; line-height: 2;">
+                    進入簡報後製的主題<br>
+                    學習如何編輯 NotebookLM 生成的 PDF 簡報<br>
+                    讓它能夠被修改、調整、甚至完全客製化<br>
+                    掌握 PDF 轉換與編輯的技巧
+                </p>
+                <div class="tags" style="margin-top: 40px;">
+                    <span class="tag">PDF 格式解析</span>
+                    <span class="tag">格式轉換</span>
+                    <span class="tag">簡報編輯</span>
+                    <span class="tag">後製技巧</span>
+                </div>
+                <div style="margin-top: 50px; display: flex; gap: 20px; justify-content: center;">
+                    <a href="單元目次.html" class="next-unit-btn" style="background: rgba(255,255,255,0.2); color: white; padding: 15px 35px; border-radius: 30px; text-decoration: none; font-size: 18px; font-weight: 600; border: 2px solid rgba(255,255,255,0.4); transition: all 0.3s ease;">回到目次</a>
+                    <a href="單元8-為什麼PDF無法直接編輯.html" class="next-unit-btn" style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 35px; border-radius: 30px; text-decoration: none; font-size: 18px; font-weight: 600; border: none; box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">下一單元</a>
+                </div>
+                <span class="page-number" style="color: #666;">24 / 24</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 導航箭頭 -->
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">&#10094;</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">&#10095;</button>
+
+    <!-- 頁碼指示器 -->
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            updateButtons();
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'Home') goToSlide(0);
+            if (e.key === 'End') goToSlide(totalSlides - 1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            container.innerHTML = '';
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(index);
+                container.appendChild(dot);
+            });
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === index);
+            });
+
+            updateButtons();
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        function goToSlide(index) {
+            showSlide(index);
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

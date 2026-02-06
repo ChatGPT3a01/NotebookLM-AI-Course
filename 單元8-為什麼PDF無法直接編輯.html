@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單元 8 - 為什麼PDF無法直接編輯</title>
+    <style>
+        /* 基礎設定 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* === 導航列 === */
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .nav-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .nav-buttons { display: flex; gap: 12px; }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* === 導航箭頭 === */
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* === 投影片容器 === */
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            padding-top: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 20;
+        }
+
+        /* === 內容卡片 === */
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 45px 55px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* === 封面特殊樣式 === */
+        .cover-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(160deg, #667eea 0%, #764ba2 50%, #6B73FF 100%);
+            color: white;
+        }
+
+        .cover-card .unit-badge {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 30px;
+            padding: 10px 30px;
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+
+        .cover-card h1 {
+            font-size: 52px;
+            background: linear-gradient(90deg, #fff 0%, #f0f0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .cover-card .subtitle {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 700px;
+            line-height: 1.6;
+        }
+
+        .cover-card .tags {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cover-card .tag {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .instructor-info {
+            margin-top: 40px;
+            padding: 20px 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .instructor-info p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        /* 其他通用樣式 */
+        h1 { color: #667eea; font-size: 38px; margin-bottom: 20px; border-bottom: 4px solid #764ba2; padding-bottom: 12px; }
+        h2 { color: #764ba2; font-size: 28px; margin: 25px 0 15px 0; }
+        h3 { color: #667eea; font-size: 22px; margin: 20px 0 12px 0; }
+        p, li { font-size: 18px; line-height: 1.85; color: #444; margin-bottom: 12px; }
+        ul, ol { padding-left: 25px; }
+        li { margin-bottom: 10px; }
+
+        code {
+            background: #f0f2f5;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            color: #e74c3c;
+            font-size: 0.95em;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #667eea 0%, #764ba2 100%);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .box {
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 5px solid;
+            font-size: 17px;
+        }
+        .info { background: #e8f4fd; border-color: #667eea; color: #2c3e50; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .tip { background: #f3e5f5; border-color: #764ba2; color: #4a148c; }
+        .example { background: #e8f5e9; border-color: #4caf50; color: #1b5e20; }
+        .danger { background: #ffe6e6; border-color: #e74c3c; color: #c0392b; }
+
+        /* 提示詞區塊 */
+        .prompt-box {
+            background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            position: relative;
+        }
+        .prompt-box::before {
+            content: '提示詞範例';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .prompt-box p {
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+            font-size: 17px;
+            line-height: 1.8;
+            margin: 10px 0 0 0;
+        }
+
+        /* 概念卡片 - 漸層版 */
+        .concept-card {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            padding: 25px;
+            border-radius: 15px;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        .concept-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+        .concept-card h3 {
+            color: white;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+        }
+        .concept-card p {
+            font-size: 16px;
+            color: rgba(255,255,255,0.95);
+            margin-bottom: 0;
+        }
+        .concept-card ul {
+            color: rgba(255,255,255,0.95);
+        }
+        .concept-card li {
+            color: rgba(255,255,255,0.95);
+        }
+
+        /* 淺色概念卡片 */
+        .concept-card-light {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .concept-card-light:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .concept-card-light h3 {
+            color: #667eea;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+        }
+        .concept-card-light p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 0;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .three-column {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        /* 比較表格 */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .comparison-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 700;
+        }
+        .comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .comparison-table tr:hover {
+            background: #e8f4fd;
+        }
+
+        /* 流程步驟 */
+        .step-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 18px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* 問題卡片 */
+        .problem-card {
+            background: linear-gradient(135deg, #ffe6e6, #fff0f0);
+            border: 2px solid #e74c3c;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .problem-card h4 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .problem-card p {
+            color: #c0392b;
+            margin-bottom: 0;
+        }
+
+        /* 解決方案卡片 */
+        .solution-card {
+            background: linear-gradient(135deg, #e8f5e9, #f0fff4);
+            border: 2px solid #27ae60;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .solution-card h4 {
+            color: #27ae60;
+            margin-bottom: 10px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .solution-card p, .solution-card li {
+            color: #1e8449;
+        }
+
+        /* 對比區塊 */
+        .vs-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: center;
+            margin: 25px 0;
+        }
+        .vs-badge {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        /* 技術解說區塊 */
+        .tech-box {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 15px;
+            padding: 25px;
+            color: white;
+            margin: 20px 0;
+        }
+        .tech-box h3 {
+            color: #74b9ff;
+            margin-top: 0;
+        }
+        .tech-box p {
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* 流程圖樣式 */
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+        .flow-step {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 120px;
+        }
+        .flow-arrow {
+            font-size: 24px;
+            color: #667eea;
+        }
+
+        /* 色票展示 */
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .color-swatch {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .color-preview {
+            height: 80px;
+        }
+        .color-info {
+            background: white;
+            padding: 12px;
+            text-align: center;
+        }
+        .color-info strong {
+            display: block;
+            color: #333;
+            font-size: 14px;
+        }
+        .color-info code {
+            font-size: 12px;
+        }
+
+        /* 資源連結卡片 */
+        .resource-card {
+            background: linear-gradient(135deg, #f8f9fa, #fff);
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+        .resource-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
+        }
+        .resource-card h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        .resource-card p {
+            color: #666;
+            font-size: 15px;
+            margin-bottom: 0;
+        }
+
+        /* 頁碼指示器 */
+        .indicators {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 4000;
+            padding: 12px 25px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 30px;
+            backdrop-filter: blur(8px);
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dot:hover {
+            background: rgba(255,255,255,0.7);
+        }
+        .dot.active {
+            background: #fff;
+            transform: scale(1.3);
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            right: 25px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* 滾動條美化 */
+        .content-card::-webkit-scrollbar {
+            width: 8px;
+        }
+        .content-card::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        /* 圖示樣式 */
+        .icon-large {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        /* 特殊標籤 */
+        .section-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        /* 導航按鈕樣式 */
+        .next-unit-btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        }
+        .next-unit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+        }
+
+        /* OCR 圖解樣式 */
+        .ocr-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        .ocr-step {
+            text-align: center;
+            padding: 20px;
+        }
+        .ocr-icon {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+        .ocr-label {
+            font-weight: bold;
+            color: #667eea;
+        }
+        .ocr-arrow {
+            font-size: 30px;
+            color: #764ba2;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 導航列 -->
+    <div class="nav-bar">
+        <div class="nav-title">單元 8 - 為什麼PDF無法直接編輯</div>
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="goToSlide(0)">首頁</button>
+            <button class="nav-btn" onclick="toggleFullscreen()">全螢幕</button>
+            <a href="單元目次.html" class="nav-btn">目次</a>
+            <a href="https://www.facebook.com/groups/2754139931432955" target="_blank" class="nav-btn">FB</a>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">YT</a>
+        </div>
+    </div>
+
+    <!-- 投影片內容 -->
+    <div class="slide-container">
+
+        <!-- Slide 1: 封面 -->
+        <div class="slide active">
+            <div class="content-card cover-card">
+                <div class="unit-badge">第三部分：簡報後製篇</div>
+                <h1>為什麼PDF無法直接編輯</h1>
+                <p class="subtitle">了解NotebookLM輸出PDF的技術限制<br>掌握解決方案，讓後製工作更順暢</p>
+                <div class="tags">
+                    <span class="tag">影像式PDF</span>
+                    <span class="tag">OCR技術</span>
+                    <span class="tag">AI圖層分離</span>
+                    <span class="tag">素色背景優化</span>
+                    <span class="tag">後製解決方案</span>
+                </div>
+                <div class="instructor-info">
+                    <p>NotebookLM 完整教學課程</p>
+                    <p>簡報後製篇 - 技術原理解說</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: NotebookLM的輸出格式 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>NotebookLM 的輸出格式限制</h1>
+                <div class="box warning">
+                    <strong>關鍵問題：</strong>NotebookLM 生成的簡報只能輸出為 PDF 格式，沒有提供 PPTX（PowerPoint）格式！
+                </div>
+
+                <h2>NotebookLM 可輸出的內容類型</h2>
+                <div class="concept-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="concept-card-light">
+                        <div class="icon-large">🎙️</div>
+                        <h3>語音摘要</h3>
+                        <p>將文件內容轉換為 Podcast 風格的語音對話</p>
+                    </div>
+                    <div class="concept-card-light">
+                        <div class="icon-large">🎬</div>
+                        <h3>影片摘要</h3>
+                        <p>從 YouTube 影片提取重點摘要</p>
+                    </div>
+                    <div class="concept-card-light">
+                        <div class="icon-large">🧠</div>
+                        <h3>心智圖</h3>
+                        <p>將複雜概念視覺化呈現</p>
+                    </div>
+                    <div class="concept-card-light">
+                        <div class="icon-large">📊</div>
+                        <h3>簡報 PDF</h3>
+                        <p>生成精美的簡報檔案</p>
+                    </div>
+                </div>
+
+                <div class="box info" style="margin-top: 25px;">
+                    <strong>延伸工具：</strong>Chrome 擴充功能「NotebookLM Web Importer」可以快速將網頁內容匯入 NotebookLM，大幅提升資料收集效率！
+                </div>
+                <span class="page-number">2 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 3: 兩種PDF類型 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>認識兩種 PDF 類型</h1>
+                <p style="font-size: 20px; text-align: center; margin-bottom: 30px;">並非所有 PDF 都是相同的！了解差異是解決問題的第一步</p>
+
+                <div class="vs-container">
+                    <div class="concept-card" style="background: linear-gradient(145deg, #27ae60, #2ecc71);">
+                        <h3 style="text-align: center;">可編輯 PDF</h3>
+                        <p style="text-align: center; font-size: 50px; margin: 20px 0;">📝</p>
+                        <ul style="font-size: 15px;">
+                            <li>文字以向量形式儲存</li>
+                            <li>可直接選取、複製文字</li>
+                            <li>支援文字搜尋功能</li>
+                            <li>檔案體積較小</li>
+                            <li>可用 Adobe Acrobat 編輯</li>
+                        </ul>
+                    </div>
+                    <div class="vs-badge">VS</div>
+                    <div class="concept-card" style="background: linear-gradient(145deg, #e74c3c, #c0392b);">
+                        <h3 style="text-align: center;">影像式 PDF</h3>
+                        <p style="text-align: center; font-size: 50px; margin: 20px 0;">🖼️</p>
+                        <ul style="font-size: 15px;">
+                            <li>整頁是一張圖片</li>
+                            <li>無法選取或複製文字</li>
+                            <li>不支援文字搜尋</li>
+                            <li>檔案體積較大</li>
+                            <li>需要 OCR 才能編輯</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box danger" style="text-align: center; font-size: 20px;">
+                    <strong>NotebookLM 輸出的簡報 PDF 屬於「影像式 PDF」！</strong>
+                </div>
+                <span class="page-number">3 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 4: 為什麼是影像式PDF -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>為什麼 NotebookLM 輸出影像式 PDF？</h1>
+                <h2>技術流程解析</h2>
+
+                <div class="flow-diagram">
+                    <div class="flow-step">AI 生成<br>簡報內容</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">渲染為<br>視覺畫面</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">截圖/快照<br>每一頁</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">合併成<br>PDF 檔案</div>
+                </div>
+
+                <h2>為什麼採用這種方式？</h2>
+                <div class="two-column">
+                    <div class="concept-card-light">
+                        <h3>🎨 設計考量</h3>
+                        <ul style="font-size: 15px;">
+                            <li>確保所有裝置顯示一致</li>
+                            <li>避免字型相容問題</li>
+                            <li>保持複雜排版的完整性</li>
+                            <li>支援任意設計效果</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card-light">
+                        <h3>⚡ 技術考量</h3>
+                        <ul style="font-size: 15px;">
+                            <li>簡化輸出流程</li>
+                            <li>降低格式錯誤風險</li>
+                            <li>快速生成大量簡報</li>
+                            <li>減少伺服器運算負擔</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box tip">
+                    <strong>換個角度想：</strong>這確保了您看到的預覽畫面與最終輸出完全一致，不會有「預覽很美，下載卻跑版」的問題。
+                </div>
+                <span class="page-number">4 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 5: 影像式PDF的問題 - 總覽 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>影像式 PDF 的五大問題</h1>
+                <p style="font-size: 20px; text-align: center; margin-bottom: 20px;">這些限制會直接影響您的後製工作效率</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(5, 1fr);">
+                    <div class="problem-card" style="margin: 0;">
+                        <h4>❌ 無法修改文字</h4>
+                        <p style="font-size: 14px;">發現錯字也無法直接修正</p>
+                    </div>
+                    <div class="problem-card" style="margin: 0;">
+                        <h4>❌ 無法調整排版</h4>
+                        <p style="font-size: 14px;">文字位置無法移動調整</p>
+                    </div>
+                    <div class="problem-card" style="margin: 0;">
+                        <h4>❌ 無法替換圖表</h4>
+                        <p style="font-size: 14px;">圖片已融入背景中</p>
+                    </div>
+                    <div class="problem-card" style="margin: 0;">
+                        <h4>❌ 無法加入新元素</h4>
+                        <p style="font-size: 14px;">只能疊加，無法真正編輯</p>
+                    </div>
+                    <div class="problem-card" style="margin: 0;">
+                        <h4>❌ 浮水印問題</h4>
+                        <p style="font-size: 14px;">某些版本會帶有浮水印</p>
+                    </div>
+                </div>
+
+                <div class="tech-box" style="margin-top: 30px;">
+                    <h3>簡單來說</h3>
+                    <p style="font-size: 20px; text-align: center;">
+                        影像式 PDF 就像是<span style="color: #74b9ff; font-weight: bold;">「把簡報拍成照片」</span>一樣<br>
+                        您可以看，但無法修改照片裡面的任何東西
+                    </p>
+                </div>
+                <span class="page-number">5 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 6: 問題詳解 - 文字與排版 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>問題詳解：文字與排版</h1>
+
+                <div class="two-column">
+                    <div>
+                        <h2>無法修改文字</h2>
+                        <div class="problem-card">
+                            <h4>🔤 典型情境</h4>
+                            <ul style="font-size: 15px; color: #c0392b;">
+                                <li>AI 生成內容有錯字或用詞不當</li>
+                                <li>數據需要更新為最新版本</li>
+                                <li>專有名詞需要修正</li>
+                                <li>想要調整措辭或語氣</li>
+                            </ul>
+                        </div>
+                        <p style="font-size: 16px;">在可編輯 PDF 中，這些只需點選文字即可修改。但在影像式 PDF 中，文字已經「烙印」在圖片上。</p>
+                    </div>
+                    <div>
+                        <h2>無法調整排版</h2>
+                        <div class="problem-card">
+                            <h4>📐 典型情境</h4>
+                            <ul style="font-size: 15px; color: #c0392b;">
+                                <li>文字位置想要微調</li>
+                                <li>標題與內容間距不理想</li>
+                                <li>項目符號對齊有問題</li>
+                                <li>想要改變文字大小或字型</li>
+                            </ul>
+                        </div>
+                        <p style="font-size: 16px;">排版元素都是圖片的一部分，無法像在 PowerPoint 中那樣拖曳調整位置。</p>
+                    </div>
+                </div>
+
+                <div class="box info">
+                    <strong>關鍵理解：</strong>所有看起來像「文字」的內容，實際上都只是「像素」組成的圖案。
+                </div>
+                <span class="page-number">6 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 7: 問題詳解 - 圖表與元素 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>問題詳解：圖表與新元素</h1>
+
+                <div class="two-column">
+                    <div>
+                        <h2>無法替換圖表</h2>
+                        <div class="problem-card">
+                            <h4>📊 典型情境</h4>
+                            <ul style="font-size: 15px; color: #c0392b;">
+                                <li>圖表數據需要更新</li>
+                                <li>想換成更清楚的圖片</li>
+                                <li>圖表樣式不符合品牌規範</li>
+                                <li>需要加入更多數據點</li>
+                            </ul>
+                        </div>
+                        <p style="font-size: 16px;">圖表已經與背景融為一體，無法單獨選取或更換。您只能在上方「覆蓋」新圖片，但原圖依然存在。</p>
+                    </div>
+                    <div>
+                        <h2>無法加入新元素</h2>
+                        <div class="problem-card">
+                            <h4>➕ 典型情境</h4>
+                            <ul style="font-size: 15px; color: #c0392b;">
+                                <li>想要加入公司 Logo</li>
+                                <li>需要添加頁碼</li>
+                                <li>想加入額外的說明文字</li>
+                                <li>需要插入新的圖示</li>
+                            </ul>
+                        </div>
+                        <p style="font-size: 16px;">雖然可以用 PDF 編輯器「疊加」新元素，但這些元素會是獨立圖層，與原始設計缺乏整合性。</p>
+                    </div>
+                </div>
+
+                <div class="box warning">
+                    <strong>浮水印問題：</strong>部分 NotebookLM 輸出可能帶有「Generated by NotebookLM」等浮水印，這同樣是無法直接移除的！
+                </div>
+                <span class="page-number">7 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 8: 解決技術原理 - OCR -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>解決技術：OCR 光學字元辨識</h1>
+                <div class="section-badge">核心技術 1</div>
+
+                <div class="ocr-diagram">
+                    <div class="ocr-step">
+                        <div class="ocr-icon">🖼️</div>
+                        <div class="ocr-label">影像輸入</div>
+                        <p style="font-size: 14px;">PDF 頁面圖片</p>
+                    </div>
+                    <div class="ocr-arrow">→</div>
+                    <div class="ocr-step">
+                        <div class="ocr-icon">🔍</div>
+                        <div class="ocr-label">文字偵測</div>
+                        <p style="font-size: 14px;">找出文字區域</p>
+                    </div>
+                    <div class="ocr-arrow">→</div>
+                    <div class="ocr-step">
+                        <div class="ocr-icon">🧠</div>
+                        <div class="ocr-label">字元識別</div>
+                        <p style="font-size: 14px;">辨識每個文字</p>
+                    </div>
+                    <div class="ocr-arrow">→</div>
+                    <div class="ocr-step">
+                        <div class="ocr-icon">📝</div>
+                        <div class="ocr-label">可編輯文字</div>
+                        <p style="font-size: 14px;">輸出文字檔</p>
+                    </div>
+                </div>
+
+                <div class="concept-card" style="background: linear-gradient(145deg, #3498db, #2980b9);">
+                    <h3>OCR 的工作原理</h3>
+                    <p style="font-size: 17px; line-height: 1.8;">
+                        OCR（Optical Character Recognition）技術能夠「看懂」圖片中的文字。它會分析圖片中的像素模式，比對已知的文字形狀，將圖片中的文字轉換為可編輯的數位文字。現代 OCR 結合了機器學習技術，準確率已經非常高。
+                    </p>
+                </div>
+
+                <div class="box success" style="margin-top: 20px;">
+                    <strong>應用場景：</strong>將 NotebookLM 的 PDF 透過 OCR 處理後，就能獲得可編輯的文字內容！
+                </div>
+                <span class="page-number">8 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 9: 解決技術原理 - AI圖層分離 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>解決技術：AI 圖層分離</h1>
+                <div class="section-badge">核心技術 2</div>
+
+                <div class="concept-card" style="background: linear-gradient(145deg, #9b59b6, #8e44ad); margin-bottom: 25px;">
+                    <h3>什麼是 AI 圖層分離？</h3>
+                    <p style="font-size: 17px; line-height: 1.8;">
+                        AI 圖層分離技術可以「聰明地」將一張圖片拆解成多個獨立圖層：背景、文字、圖表、裝飾元素等。這讓原本「扁平」的圖片變成可以個別編輯的多層結構。
+                    </p>
+                </div>
+
+                <div class="three-column">
+                    <div class="concept-card-light">
+                        <h3>🎨 背景圖層</h3>
+                        <p>分離出純背景，包含漸層、色塊、裝飾圖案等視覺元素</p>
+                    </div>
+                    <div class="concept-card-light">
+                        <h3>📝 文字圖層</h3>
+                        <p>將文字內容獨立出來，結合 OCR 轉換為可編輯文字</p>
+                    </div>
+                    <div class="concept-card-light">
+                        <h3>📊 物件圖層</h3>
+                        <p>圖表、圖示、Logo 等元素獨立成可替換的物件</p>
+                    </div>
+                </div>
+
+                <div class="box tip" style="margin-top: 20px;">
+                    <strong>技術進展：</strong>最新的 AI 模型已經能夠精準識別並分離複雜設計中的各種元素，大幅提升編輯靈活性！
+                </div>
+                <span class="page-number">9 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 10: 兩種技術配合 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>OCR + AI 圖層分離 = 完整解決方案</h1>
+
+                <div class="flow-diagram" style="margin-bottom: 30px;">
+                    <div class="flow-step" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">影像式<br>PDF</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">AI 圖層<br>分離</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step" style="background: linear-gradient(135deg, #3498db, #2980b9);">OCR<br>文字辨識</div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">可編輯<br>簡報</div>
+                </div>
+
+                <div class="two-column">
+                    <div class="solution-card">
+                        <h4>✅ 分離後可以做到</h4>
+                        <ul style="font-size: 15px;">
+                            <li>直接修改任何文字內容</li>
+                            <li>調整文字位置與大小</li>
+                            <li>替換圖表或圖片</li>
+                            <li>加入新的設計元素</li>
+                            <li>修改背景顏色或樣式</li>
+                            <li>移除不需要的元素</li>
+                        </ul>
+                    </div>
+                    <div class="tech-box" style="margin: 0;">
+                        <h3>實際工作流程</h3>
+                        <ol style="font-size: 15px; color: rgba(255,255,255,0.9);">
+                            <li>將 PDF 上傳至支援這些技術的工具</li>
+                            <li>工具自動進行圖層分離與 OCR</li>
+                            <li>獲得可編輯的 PPTX 或其他格式</li>
+                            <li>在 PowerPoint 或其他軟體中編輯</li>
+                            <li>完成後製並輸出最終版本</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="box info" style="margin-top: 20px;">
+                    <strong>下一單元預告：</strong>單元 9 將詳細介紹「PDNob」等專業工具的實際操作方式！
+                </div>
+                <span class="page-number">10 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 11: 從源頭優化 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>更好的方法：從源頭優化</h1>
+                <div class="section-badge">預防勝於治療</div>
+
+                <div class="box success" style="font-size: 20px; text-align: center;">
+                    <strong>素色背景的簡報更容易進行後製編輯！</strong>
+                </div>
+
+                <div class="two-column" style="margin-top: 25px;">
+                    <div>
+                        <h2 style="color: #e74c3c;">複雜背景的挑戰</h2>
+                        <ul>
+                            <li>OCR 容易誤判文字</li>
+                            <li>圖層分離困難度高</li>
+                            <li>背景圖案干擾辨識</li>
+                            <li>分離後品質不佳</li>
+                            <li>需要更多手動修正</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h2 style="color: #27ae60;">素色背景的優勢</h2>
+                        <ul>
+                            <li>文字辨識準確率高</li>
+                            <li>圖層分離乾淨俐落</li>
+                            <li>背景容易重新製作</li>
+                            <li>輸出品質更好</li>
+                            <li>後製時間大幅減少</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="tech-box" style="margin-top: 25px;">
+                    <h3 style="text-align: center;">關鍵洞察</h3>
+                    <p style="text-align: center; font-size: 18px;">
+                        與其花時間修復複雜背景的 PDF，<br>
+                        不如一開始就請 NotebookLM 生成素色背景的簡報！
+                    </p>
+                </div>
+                <span class="page-number">11 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 12: 素色簡報生成提示詞 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>素色簡報生成提示詞</h1>
+                <p style="font-size: 18px; text-align: center; margin-bottom: 20px;">在 NotebookLM 中使用以下提示詞，生成易於後製的簡報</p>
+
+                <div class="prompt-box">
+                    <p>請根據上傳的內容，製作一份專業簡報。</p>
+                    <p style="margin-top: 15px;"><strong style="color: #74b9ff;">【背景設計要求】</strong></p>
+                    <p>- 使用純色或簡單漸層背景</p>
+                    <p>- 避免使用複雜的背景圖案或紋理</p>
+                    <p>- 背景顏色選擇深色系（深藍、深灰）或淺色系（白色、淺灰）</p>
+                    <p>- 文字與背景要有足夠的對比度</p>
+                    <p style="margin-top: 15px;"><strong style="color: #74b9ff;">【排版要求】</strong></p>
+                    <p>- 文字區域要清晰分明</p>
+                    <p>- 避免文字覆蓋在複雜圖案上</p>
+                    <p>- 每頁保持充足的留白空間</p>
+                </div>
+
+                <div class="box tip" style="margin-top: 15px;">
+                    <strong>進階技巧：</strong>可以指定具體的背景顏色代碼，如「背景使用 #1a1a2e 深藍色」，確保生成結果符合預期。
+                </div>
+                <span class="page-number">12 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 13: 素色配色建議 - 深色系 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>推薦素色配色：深色系</h1>
+                <p style="font-size: 18px; text-align: center; margin-bottom: 20px;">深色背景搭配淺色文字，專業感強，適合正式場合</p>
+
+                <div class="color-palette">
+                    <div class="color-swatch">
+                        <div class="color-preview" style="background: #1a1a2e;"></div>
+                        <div class="color-info">
+                            <strong>深海藍</strong>
+                            <code>#1a1a2e</code>
+                        </div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-preview" style="background: #16213e;"></div>
+                        <div class="color-info">
+                            <strong>午夜藍</strong>
+                            <code>#16213e</code>
+                        </div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-preview" style="background: #2d3436;"></div>
+                        <div class="color-info">
+                            <strong>碳灰色</strong>
+                            <code>#2d3436</code>
+                        </div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-preview" style="background: #2c3e50;"></div>
+                        <div class="color-info">
+                            <strong>深石板藍</strong>
+                            <code>#2c3e50</code>
+                        </div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-preview" style="background: #1e272e;"></div>
+                        <div class="color-info">
+                            <strong>暗岩灰</strong>
+                            <code>#1e272e</code>
+                        </div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-preview" style="background: #0f0f23;"></div>
+                        <div class="color-info">
+                            <strong>極深藍</strong>
+                            <code>#0f0f23</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box info">
+                    <strong>搭配建議：</strong>深色背景搭配白色（#ffffff）或淺灰色（#f0f0f0）文字，強調色可使用亮藍色（#74b9ff）或亮綠色（#00ff88）。
+                </div>
+                <span class="page-number">13 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 14: 素色配色建議 - 淺色系 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>推薦素色配色：淺色系</h1>
+                <p style="font-size: 18px; text-align: center; margin-bottom: 20px;">淺色背景搭配深色文字，清新明亮，適合教育與報告場合</p>
+
+                <div class="color-palette">
+                    <div class="color-swatch">
+                        <div class="color-preview" style="background: #ffffff; border: 1px solid #eee;"></div>
+                        <div class="color-info">
+                            <strong>純白色</strong>
+                            <code>#ffffff</code>
+                        </div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-preview" style="background: #f8f9fa;"></div>
+                        <div class="color-info">
+                            <strong>雲白色</strong>
+                            <code>#f8f9fa</code>
+                        </div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-preview" style="background: #f0f4f8;"></div>
+                        <div class="color-info">
+                            <strong>淺藍灰</strong>
+                            <code>#f0f4f8</code>
+                        </div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-preview" style="background: #e8f4fd;"></div>
+                        <div class="color-info">
+                            <strong>天空藍</strong>
+                            <code>#e8f4fd</code>
+                        </div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-preview" style="background: #f5f5f5;"></div>
+                        <div class="color-info">
+                            <strong>煙白色</strong>
+                            <code>#f5f5f5</code>
+                        </div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-preview" style="background: #fafafa;"></div>
+                        <div class="color-info">
+                            <strong>象牙白</strong>
+                            <code>#fafafa</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box info">
+                    <strong>搭配建議：</strong>淺色背景搭配深灰色（#333333）或深藍色（#1a1a2e）文字，強調色可使用品牌色或飽和度較高的顏色。
+                </div>
+                <span class="page-number">14 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 15: 配色對照表 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>完整配色建議對照表</h1>
+
+                <table class="comparison-table">
+                    <tr>
+                        <th>使用場景</th>
+                        <th>背景色</th>
+                        <th>主要文字</th>
+                        <th>強調色</th>
+                        <th>次要元素</th>
+                    </tr>
+                    <tr>
+                        <td><strong>商業簡報</strong></td>
+                        <td>#1a1a2e 深海藍</td>
+                        <td>#ffffff 白色</td>
+                        <td>#74b9ff 亮藍</td>
+                        <td>#a0a0b0 淺灰</td>
+                    </tr>
+                    <tr>
+                        <td><strong>教育課程</strong></td>
+                        <td>#ffffff 純白</td>
+                        <td>#333333 深灰</td>
+                        <td>#667eea 紫藍</td>
+                        <td>#666666 中灰</td>
+                    </tr>
+                    <tr>
+                        <td><strong>科技主題</strong></td>
+                        <td>#0f0f23 極深藍</td>
+                        <td>#00ff88 螢光綠</td>
+                        <td>#74b9ff 亮藍</td>
+                        <td>#888888 灰色</td>
+                    </tr>
+                    <tr>
+                        <td><strong>創意設計</strong></td>
+                        <td>#f8f9fa 雲白</td>
+                        <td>#2d3436 碳灰</td>
+                        <td>#764ba2 紫色</td>
+                        <td>#999999 淺灰</td>
+                    </tr>
+                    <tr>
+                        <td><strong>正式報告</strong></td>
+                        <td>#2c3e50 石板藍</td>
+                        <td>#ecf0f1 銀白</td>
+                        <td>#3498db 藍色</td>
+                        <td>#95a5a6 灰藍</td>
+                    </tr>
+                </table>
+
+                <div class="box tip">
+                    <strong>配色原則：</strong>背景與文字對比度要足夠（建議比例 4.5:1 以上），強調色用於重點標示，次要元素用於輔助資訊。
+                </div>
+                <span class="page-number">15 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 16: 額外資源介紹 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>實用延伸工具推薦</h1>
+                <p style="font-size: 18px; text-align: center; margin-bottom: 25px;">搭配 NotebookLM 使用，提升整體工作效率</p>
+
+                <div class="resource-card">
+                    <h4>🔌 NotebookLM Web Importer</h4>
+                    <p>Chrome 擴充功能，可以一鍵將網頁內容匯入 NotebookLM。無需手動複製貼上，直接將網頁文章、部落格、新聞等內容加入您的筆記本來源。</p>
+                </div>
+
+                <div class="resource-card">
+                    <h4>📚 ebook2audiobook</h4>
+                    <p>開源工具，可以將電子書（EPUB、PDF 等格式）轉換為有聲書。搭配 NotebookLM 的語音摘要功能，打造完整的聽覺學習體驗。支援多種 TTS 引擎，可自訂語音風格。</p>
+                </div>
+
+                <div class="resource-card">
+                    <h4>🎨 PDF 編輯工具（下一單元詳解）</h4>
+                    <p>包含 PDNob、Adobe Acrobat、Smallpdf 等工具，可以處理 NotebookLM 輸出的 PDF，進行文字編輯、格式轉換等後製工作。</p>
+                </div>
+
+                <div class="box info">
+                    <strong>工具整合思維：</strong>NotebookLM 是內容生成的核心，搭配各種輔助工具可以建立完整的知識處理工作流程。
+                </div>
+                <span class="page-number">16 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 17: 實務工作流程建議 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>實務工作流程建議</h1>
+
+                <div class="step-box">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>生成階段：指定素色背景</strong><br>
+                        使用本單元提供的提示詞，讓 NotebookLM 生成素色背景的簡報，從源頭降低後製難度。
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>檢視階段：確認需要修改的項目</strong><br>
+                        下載 PDF 後，詳細檢視每一頁，標記需要修改的文字、圖表或排版問題。
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>轉換階段：使用專業工具處理</strong><br>
+                        將 PDF 上傳至支援 OCR 與圖層分離的工具（如 PDNob），轉換為可編輯格式。
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">4</span>
+                    <div>
+                        <strong>編輯階段：在熟悉的軟體中修改</strong><br>
+                        在 PowerPoint、Keynote 或 Google Slides 中進行細部調整與品牌化處理。
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">5</span>
+                    <div>
+                        <strong>輸出階段：匯出最終版本</strong><br>
+                        完成編輯後，輸出為 PDF 或 PPTX 格式，供分享或簡報使用。
+                    </div>
+                </div>
+                <span class="page-number">17 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 18: 常見問題 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>常見問題 FAQ</h1>
+
+                <div class="two-column">
+                    <div>
+                        <div class="concept-card-light" style="margin-bottom: 15px;">
+                            <h3>Q: OCR 辨識率不高怎麼辦？</h3>
+                            <p style="font-size: 15px;">確保原始 PDF 解析度足夠（建議 300dpi 以上）。若背景太複雜，考慮重新生成素色版本。也可以嘗試不同的 OCR 工具。</p>
+                        </div>
+                        <div class="concept-card-light" style="margin-bottom: 15px;">
+                            <h3>Q: 轉換後排版跑掉？</h3>
+                            <p style="font-size: 15px;">這是常見問題。建議先轉換再手動調整排版，或選擇「保持原始版面」的轉換選項。素色背景的 PDF 通常轉換效果更好。</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="concept-card-light" style="margin-bottom: 15px;">
+                            <h3>Q: 有免費的轉換工具嗎？</h3>
+                            <p style="font-size: 15px;">有的！Smallpdf、iLovePDF 等線上工具提供免費額度。開源的 OCRmyPDF 也是不錯的選擇。下一單元會詳細介紹各工具比較。</p>
+                        </div>
+                        <div class="concept-card-light" style="margin-bottom: 15px;">
+                            <h3>Q: 中文辨識效果如何？</h3>
+                            <p style="font-size: 15px;">現代 OCR 工具對繁體中文支援已經很好。建議選擇有明確標示支援繁體中文的工具，並在轉換前確認語言設定。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box warning">
+                    <strong>重要提醒：</strong>若簡報內容涉及機密資訊，使用線上工具前請確認其隱私政策，或考慮使用離線工具處理。
+                </div>
+                <span class="page-number">18 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 19: 本單元重點回顧 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>本單元重點回顧</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card">
+                        <h3>📋 PDF 類型差異</h3>
+                        <p>NotebookLM 輸出的是影像式 PDF，整頁都是圖片，無法直接編輯文字或調整排版。</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(145deg, #3498db, #2980b9);">
+                        <h3>🔧 解決技術</h3>
+                        <p>OCR 光學字元辨識 + AI 圖層分離，兩者配合可將影像式 PDF 轉換為可編輯格式。</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(145deg, #27ae60, #2ecc71);">
+                        <h3>🎨 源頭優化</h3>
+                        <p>使用素色背景的簡報更容易後製。深色系或淺色系純色背景都是好選擇。</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(145deg, #e67e22, #d35400);">
+                        <h3>📝 提示詞技巧</h3>
+                        <p>在生成階段就指定背景設計要求，可大幅降低後製工作量。</p>
+                    </div>
+                </div>
+
+                <div class="box success" style="margin-top: 25px; text-align: center; font-size: 20px;">
+                    <strong>核心觀念：了解限制才能找到突破口，預防問題比解決問題更有效率！</strong>
+                </div>
+                <span class="page-number">19 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 20: 下一單元預告 -->
+        <div class="slide">
+            <div class="content-card cover-card">
+                <h1 style="font-size: 42px;">下一單元預告</h1>
+                <p class="subtitle" style="font-size: 32px; margin-top: 30px;">
+                    <strong>單元 9：PDNob 文字編輯實戰</strong>
+                </p>
+                <p class="subtitle" style="font-size: 18px; margin-top: 25px; line-height: 2;">
+                    專業 PDF 編輯工具介紹與比較<br>
+                    PDNob 完整操作教學<br>
+                    OCR 設定與最佳化技巧<br>
+                    從 PDF 到 PPTX 的完整轉換流程
+                </p>
+                <div class="tags" style="margin-top: 40px;">
+                    <span class="tag">PDNob</span>
+                    <span class="tag">OCR 實戰</span>
+                    <span class="tag">格式轉換</span>
+                    <span class="tag">編輯技巧</span>
+                </div>
+                <div style="margin-top: 50px; display: flex; gap: 20px; justify-content: center;">
+                    <a href="單元目次.html" class="nav-btn" style="background: rgba(255,255,255,0.2); color: white; padding: 15px 35px; border-radius: 30px; text-decoration: none; font-size: 18px; font-weight: 600; border: 2px solid rgba(255,255,255,0.4);">回到目次</a>
+                    <a href="單元9-PDNob文字編輯.html" class="next-unit-btn">下一單元：PDNob 文字編輯</a>
+                </div>
+                <span class="page-number" style="color: rgba(255,255,255,0.6);">20 / 20</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 導航箭頭 -->
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">&#10094;</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">&#10095;</button>
+
+    <!-- 頁碼指示器 -->
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            updateButtons();
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'Home') goToSlide(0);
+            if (e.key === 'End') goToSlide(totalSlides - 1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            container.innerHTML = '';
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(index);
+                container.appendChild(dot);
+            });
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === index);
+            });
+
+            updateButtons();
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        function goToSlide(index) {
+            showSlide(index);
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

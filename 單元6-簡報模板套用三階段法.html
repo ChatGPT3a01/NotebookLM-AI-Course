@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單元 6 - 簡報模板套用三階段法</title>
+    <style>
+        /* 基礎設定 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* === 導航列 === */
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .nav-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .nav-buttons { display: flex; gap: 12px; }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* === 導航箭頭 === */
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* === 投影片容器 === */
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            padding-top: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 20;
+        }
+
+        /* === 內容卡片 === */
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 45px 55px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* === 封面特殊樣式 === */
+        .cover-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(160deg, #0a0a1a 0%, #1a1a3e 40%, #0f2847 70%, #0a1628 100%);
+            color: white;
+        }
+
+        .cover-card .unit-badge {
+            background: linear-gradient(90deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3));
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            border-radius: 30px;
+            padding: 10px 30px;
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            color: #74b9ff;
+        }
+
+        .cover-card h1 {
+            font-size: 52px;
+            background: linear-gradient(90deg, #fff 0%, #74b9ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .cover-card .subtitle {
+            font-size: 24px;
+            color: #a0a0b0;
+            max-width: 700px;
+            line-height: 1.6;
+        }
+
+        .cover-card .tags {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cover-card .tag {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #b0b0c0;
+        }
+
+        /* 其他通用樣式 */
+        h1 { color: #1a1a2e; font-size: 38px; margin-bottom: 20px; border-bottom: 4px solid #3498db; padding-bottom: 12px; }
+        h2 { color: #16213e; font-size: 28px; margin: 25px 0 15px 0; }
+        h3 { color: #0f3460; font-size: 22px; margin: 20px 0 12px 0; }
+        p, li { font-size: 18px; line-height: 1.85; color: #444; margin-bottom: 12px; }
+        ul, ol { padding-left: 25px; }
+        li { margin-bottom: 10px; }
+
+        code {
+            background: #f0f2f5;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            color: #e74c3c;
+            font-size: 0.95em;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #74b9ff 0%, #a29bfe 100%);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .box {
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 5px solid;
+            font-size: 17px;
+        }
+        .info { background: #e3f2fd; border-color: #2196f3; color: #0d47a1; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .tip { background: #f3e5f5; border-color: #9c27b0; color: #4a148c; }
+        .example { background: #e8f5e9; border-color: #4caf50; color: #1b5e20; }
+
+        /* 提示詞區塊 */
+        .prompt-box {
+            background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            position: relative;
+        }
+        .prompt-box::before {
+            content: '提示詞範例';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .prompt-box p {
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+            font-size: 17px;
+            line-height: 1.8;
+            margin: 10px 0 0 0;
+        }
+
+        /* 情境卡片 */
+        .scenario-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            color: white;
+        }
+        .scenario-box h3 {
+            color: white;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .scenario-box p {
+            color: rgba(255,255,255,0.95);
+            font-size: 17px;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        .concept-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .concept-card:hover {
+            transform: translateY(-5px);
+            border-color: #74b9ff;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .concept-card h3 {
+            color: #1a1a2e;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+        }
+        .concept-card p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 0;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .feature-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .step-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 18px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #3498db;
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .comparison-table th {
+            background: #f8f9fa;
+            color: #1a1a2e;
+            font-weight: 700;
+        }
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .indicators {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 4000;
+            padding: 12px 25px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 30px;
+            backdrop-filter: blur(8px);
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dot:hover {
+            background: rgba(255,255,255,0.7);
+        }
+        .dot.active {
+            background: #74b9ff;
+            transform: scale(1.3);
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            right: 25px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* 滾動條美化 */
+        .content-card::-webkit-scrollbar {
+            width: 8px;
+        }
+        .content-card::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        /* 階段標籤 */
+        .phase-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .phase-badge.phase-1 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .phase-badge.phase-2 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .phase-badge.phase-3 {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        /* 命名範例區塊 */
+        .naming-example {
+            background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .naming-example code {
+            display: block;
+            background: transparent;
+            color: #00ff88;
+            font-size: 16px;
+            padding: 5px 0;
+        }
+
+        /* FAQ 區塊 */
+        .faq-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #e74c3c;
+        }
+        .faq-item h4 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .faq-item p {
+            margin-bottom: 0;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 導航列 -->
+    <div class="nav-bar">
+        <div class="nav-title">單元 6 - 簡報模板套用三階段法</div>
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="goToSlide(0)">首頁</button>
+            <button class="nav-btn" onclick="toggleFullscreen()">全螢幕</button>
+            <a href="單元目次.html" class="nav-btn">目次</a>
+            <a href="https://www.facebook.com/groups/2754139931432955" target="_blank" class="nav-btn">FB</a>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">YT</a>
+        </div>
+    </div>
+
+    <!-- 投影片內容 -->
+    <div class="slide-container">
+
+        <!-- Slide 1: 封面 -->
+        <div class="slide active">
+            <div class="content-card cover-card">
+                <div class="unit-badge">第二部分：簡報生成篇</div>
+                <h1>簡報模板套用三階段法</h1>
+                <p class="subtitle">讓 NotebookLM 產出符合品牌風格的專業簡報<br>從骨架到成品的完整工作流程</p>
+                <div class="tags">
+                    <span class="tag">第一階段：選定骨架</span>
+                    <span class="tag">第二階段：清理命名</span>
+                    <span class="tag">第三階段：化學反應</span>
+                    <span class="tag">命名即命令</span>
+                    <span class="tag">魔法指令</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 為什麼需要模板套用法 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>為什麼需要「模板套用法」？</h1>
+                <div class="scenario-box">
+                    <h3>常見困擾</h3>
+                    <p>NotebookLM 生成的簡報內容很棒，但風格總是不符合公司品牌？每次都要花大量時間重新排版？</p>
+                </div>
+
+                <div class="two-column" style="margin-top: 25px;">
+                    <div>
+                        <h3 style="color: #e74c3c;">直接生成的問題</h3>
+                        <ul>
+                            <li>風格無法控制</li>
+                            <li>不符合公司品牌規範</li>
+                            <li>排版需要大量調整</li>
+                            <li>每次產出都不一致</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 style="color: #27ae60;">模板套用法的優勢</h3>
+                        <ul>
+                            <li>完全符合品牌風格</li>
+                            <li>產出品質一致穩定</li>
+                            <li>大幅減少後製時間</li>
+                            <li>可重複使用的工作流</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box success" style="text-align: center; font-size: 20px;">
+                    <strong>核心概念：讓 AI 在你的框架內創作！</strong>
+                </div>
+                <span class="page-number">2 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 3: 三階段總覽 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>模板套用三階段法總覽</h1>
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="concept-card" style="border-top: 5px solid #f5576c;">
+                        <span class="phase-badge phase-1">第一階段</span>
+                        <h3>選定骨架與外殼</h3>
+                        <p>決定簡報的視覺框架<br>選擇合適的模板來源<br>確認符合使用情境</p>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #00f2fe;">
+                        <span class="phase-badge phase-2">第二階段</span>
+                        <h3>清理與命名</h3>
+                        <p>移除範例文字內容<br>轉存為 PNG 圖片<br>精準命名每個版型</p>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #38f9d7;">
+                        <span class="phase-badge phase-3">第三階段</span>
+                        <h3>化學反應</h3>
+                        <p>上傳背景圖到 NotebookLM<br>搭配內容來源<br>使用魔法指令生成</p>
+                    </div>
+                </div>
+
+                <div class="box tip" style="margin-top: 25px;">
+                    <strong>關鍵心法：</strong>前兩個階段的準備工作做得越精確，第三階段的 AI 產出品質就越高！
+                </div>
+                <span class="page-number">3 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 4: 第一階段 - 模板來源 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="phase-badge phase-1">第一階段</span>
+                <h1>選定簡報的「骨架」與「外殼」</h1>
+                <h2>模板來源選擇</h2>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="concept-card">
+                        <h3>公司品牌模板</h3>
+                        <ul style="font-size: 15px; padding-left: 18px;">
+                            <li>最符合品牌規範</li>
+                            <li>通常有固定配色</li>
+                            <li>包含 Logo 位置</li>
+                            <li>格式較為標準化</li>
+                        </ul>
+                        <div class="box info" style="padding: 12px; font-size: 14px;">
+                            優先選擇！若公司有現成模板，這是最佳選項
+                        </div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>Slidesgo / Canva</h3>
+                        <ul style="font-size: 15px; padding-left: 18px;">
+                            <li>海量免費模板</li>
+                            <li>設計風格多元</li>
+                            <li>可下載編輯</li>
+                            <li>品質參差不齊</li>
+                        </ul>
+                        <div class="box warning" style="padding: 12px; font-size: 14px;">
+                            注意授權條款，確認可商用
+                        </div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>自己設計</h3>
+                        <ul style="font-size: 15px; padding-left: 18px;">
+                            <li>完全客製化</li>
+                            <li>獨特風格</li>
+                            <li>需要設計能力</li>
+                            <li>較花時間</li>
+                        </ul>
+                        <div class="box success" style="padding: 12px; font-size: 14px;">
+                            適合有特殊需求的專案
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">4 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 5: 第一階段 - 挑選原則 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="phase-badge phase-1">第一階段</span>
+                <h1>模板挑選四大原則</h1>
+
+                <div class="step-box" style="border-left-color: #e74c3c;">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>避開複雜底圖</strong><br>
+                        花俏的背景圖案會干擾文字閱讀，AI 生成的內容也難以配合。選擇<span class="highlight">簡潔、留白多</span>的設計。
+                    </div>
+                </div>
+
+                <div class="step-box" style="border-left-color: #f39c12;">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>預留充足文字區域</strong><br>
+                        模板必須有明確的內容區塊，讓 AI 知道文字應該放在哪裡。避免選擇「藝術感強但文字空間小」的模板。
+                    </div>
+                </div>
+
+                <div class="step-box" style="border-left-color: #27ae60;">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>風格簡單一致</strong><br>
+                        整套模板的視覺風格要統一，避免每頁風格跳動太大。<span class="highlight">一致性 > 華麗度</span>
+                    </div>
+                </div>
+
+                <div class="step-box" style="border-left-color: #3498db;">
+                    <span class="step-number">4</span>
+                    <div>
+                        <strong>包含多種頁面類型</strong><br>
+                        好的模板應該包含：封面、目錄、內文（多種排版）、圖表頁、結尾頁等，才能應對各種內容需求。
+                    </div>
+                </div>
+
+                <div class="box warning">
+                    <strong>常見錯誤：</strong>選擇視覺炫目但實用性低的模板，結果花更多時間調整！
+                </div>
+                <span class="page-number">5 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 6: 第一階段 - 建議頁面類型 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="phase-badge phase-1">第一階段</span>
+                <h1>建議準備的頁面類型</h1>
+
+                <table class="comparison-table">
+                    <tr>
+                        <th style="width: 25%;">頁面類型</th>
+                        <th style="width: 35%;">用途說明</th>
+                        <th style="width: 40%;">設計重點</th>
+                    </tr>
+                    <tr>
+                        <td><strong>封面頁</strong></td>
+                        <td>簡報開場，呈現主題與講者</td>
+                        <td>標題區域要大、可放 Logo</td>
+                    </tr>
+                    <tr>
+                        <td><strong>目錄頁</strong></td>
+                        <td>列出簡報大綱</td>
+                        <td>清晰的列點空間</td>
+                    </tr>
+                    <tr>
+                        <td><strong>章節過場頁</strong></td>
+                        <td>區隔不同主題段落</td>
+                        <td>標題醒目、設計感強</td>
+                    </tr>
+                    <tr>
+                        <td><strong>內文頁（純文字）</strong></td>
+                        <td>說明重點、條列資訊</td>
+                        <td>標題 + 多行文字空間</td>
+                    </tr>
+                    <tr>
+                        <td><strong>內文頁（左圖右文）</strong></td>
+                        <td>圖文搭配說明</td>
+                        <td>左右分欄、比例適中</td>
+                    </tr>
+                    <tr>
+                        <td><strong>內文頁（右圖左文）</strong></td>
+                        <td>同上，變化排版</td>
+                        <td>右圖左文版本</td>
+                    </tr>
+                    <tr>
+                        <td><strong>數據圖表頁</strong></td>
+                        <td>呈現統計數據</td>
+                        <td>圖表區域要夠大</td>
+                    </tr>
+                    <tr>
+                        <td><strong>結尾頁</strong></td>
+                        <td>總結、致謝、Q&A</td>
+                        <td>簡潔有力</td>
+                    </tr>
+                </table>
+                <span class="page-number">6 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 7: 第二階段 - 清理範例文字 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="phase-badge phase-2">第二階段</span>
+                <h1>清理與命名</h1>
+                <h2>步驟一：刪除範例文字</h2>
+
+                <div class="scenario-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <h3>為什麼要刪除？</h3>
+                    <p>模板通常帶有「Lorem ipsum」或示範文字，這些會干擾 AI 的判斷，讓它誤以為這是要保留的內容。</p>
+                </div>
+
+                <div class="two-column">
+                    <div>
+                        <h3 style="color: #e74c3c;">要刪除的元素</h3>
+                        <ul>
+                            <li>所有範例標題文字</li>
+                            <li>Lorem ipsum 填充文</li>
+                            <li>示範用的項目符號文字</li>
+                            <li>「在此輸入標題」類提示</li>
+                            <li>範例數據或假圖表</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 style="color: #27ae60;">要保留的元素</h3>
+                        <ul>
+                            <li>背景色彩/漸層</li>
+                            <li>裝飾性圖案/線條</li>
+                            <li>Logo 位置（如有）</li>
+                            <li>頁碼位置框架</li>
+                            <li>整體版面結構</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box tip">
+                    <strong>操作技巧：</strong>在 PowerPoint 或 Google Slides 中，選取文字框後直接刪除內容或整個文字框，保留純淨的背景版型。
+                </div>
+                <span class="page-number">7 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 8: 第二階段 - 另存為 PNG -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="phase-badge phase-2">第二階段</span>
+                <h1>步驟二：另存為 PNG 圖片</h1>
+
+                <div class="step-box">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>PowerPoint</strong><br>
+                        檔案 → 另存新檔 → 選擇「PNG」格式 → 選擇「所有投影片」
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>Google Slides</strong><br>
+                        檔案 → 下載 → PNG 圖片（每張投影片會分開下載）
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>Canva</strong><br>
+                        分享 → 下載 → 選擇 PNG → 勾選要下載的頁面
+                    </div>
+                </div>
+
+                <div class="box info">
+                    <strong>為什麼用 PNG？</strong><br>
+                    <ul style="margin-top: 10px;">
+                        <li>PNG 是無損壓縮格式，品質最佳</li>
+                        <li>NotebookLM 對圖片格式支援良好</li>
+                        <li>每張圖片獨立，便於命名管理</li>
+                        <li>AI 可以清楚辨識版型結構</li>
+                    </ul>
+                </div>
+
+                <div class="box warning">
+                    <strong>注意：</strong>確認匯出解析度足夠（建議 1920x1080 或以上），避免模糊影響 AI 判讀。
+                </div>
+                <span class="page-number">8 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 9: 第二階段 - 命名即命令 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="phase-badge phase-2">第二階段</span>
+                <h1>步驟三：精準命名 - 命名即命令！</h1>
+
+                <div class="scenario-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h3>核心觀念</h3>
+                    <p>檔案名稱不只是標籤，更是給 AI 的「指令」！精準的命名讓 AI 知道這張背景圖應該用在什麼場景。</p>
+                </div>
+
+                <div class="two-column">
+                    <div>
+                        <h3 style="color: #e74c3c;">錯誤命名</h3>
+                        <div class="naming-example">
+                            <code>slide1.png</code>
+                            <code>template_01.png</code>
+                            <code>背景.png</code>
+                            <code>image001.png</code>
+                            <code>截圖 2024-01-15.png</code>
+                        </div>
+                        <p style="font-size: 15px; color: #e74c3c;">AI 完全無法理解這些檔案的用途！</p>
+                    </div>
+                    <div>
+                        <h3 style="color: #27ae60;">正確命名</h3>
+                        <div class="naming-example">
+                            <code>封面頁.png</code>
+                            <code>目錄頁.png</code>
+                            <code>內文頁_左圖右文.png</code>
+                            <code>章節過場頁.png</code>
+                            <code>結尾頁_QA.png</code>
+                        </div>
+                        <p style="font-size: 15px; color: #27ae60;">AI 一看就懂該怎麼使用！</p>
+                    </div>
+                </div>
+                <span class="page-number">9 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 10: 第二階段 - 命名範例完整版 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="phase-badge phase-2">第二階段</span>
+                <h1>完整命名範例表</h1>
+
+                <table class="comparison-table">
+                    <tr>
+                        <th style="width: 35%;">建議檔名</th>
+                        <th style="width: 65%;">用途說明</th>
+                    </tr>
+                    <tr>
+                        <td><code>封面頁.png</code></td>
+                        <td>簡報第一頁，放置主標題和副標題</td>
+                    </tr>
+                    <tr>
+                        <td><code>目錄頁.png</code></td>
+                        <td>展示簡報大綱，列出各章節標題</td>
+                    </tr>
+                    <tr>
+                        <td><code>章節過場頁.png</code></td>
+                        <td>各大章節的開頭頁，強調章節標題</td>
+                    </tr>
+                    <tr>
+                        <td><code>內文頁_純文字.png</code></td>
+                        <td>標題 + 條列式重點文字</td>
+                    </tr>
+                    <tr>
+                        <td><code>內文頁_左圖右文.png</code></td>
+                        <td>左側放圖片，右側放說明文字</td>
+                    </tr>
+                    <tr>
+                        <td><code>內文頁_右圖左文.png</code></td>
+                        <td>右側放圖片，左側放說明文字</td>
+                    </tr>
+                    <tr>
+                        <td><code>內文頁_雙欄.png</code></td>
+                        <td>左右兩欄並列的比較式排版</td>
+                    </tr>
+                    <tr>
+                        <td><code>數據圖表頁.png</code></td>
+                        <td>放置統計圖表或數據視覺化</td>
+                    </tr>
+                    <tr>
+                        <td><code>結尾頁.png</code></td>
+                        <td>謝謝、Q&A 或聯絡資訊</td>
+                    </tr>
+                </table>
+                <span class="page-number">10 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 11: 第三階段 - 上傳背景圖 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="phase-badge phase-3">第三階段</span>
+                <h1>在 NotebookLM 進行「化學反應」</h1>
+                <h2>步驟一：上傳背景圖片作為來源</h2>
+
+                <div class="step-box">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>開啟 NotebookLM，建立新筆記本或進入現有筆記本</strong><br>
+                        建議為這個簡報專案建立專屬筆記本
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>點擊「新增來源」→「上傳檔案」</strong><br>
+                        選擇所有準備好的 PNG 背景圖片
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>等待處理完成</strong><br>
+                        NotebookLM 會分析這些圖片的版型結構
+                    </div>
+                </div>
+
+                <div class="box success">
+                    <strong>小技巧：</strong>可以一次選擇多個檔案批次上傳，節省時間！
+                </div>
+
+                <div class="box info">
+                    <strong>為什麼背景圖也要當作「來源」？</strong><br>
+                    NotebookLM 會理解這些圖片代表的版型結構，並在生成簡報時參考使用。
+                </div>
+                <span class="page-number">11 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 12: 第三階段 - 上傳內容來源 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="phase-badge phase-3">第三階段</span>
+                <h1>步驟二：上傳內容來源</h1>
+
+                <p style="font-size: 20px;">背景圖片是「外殼」，現在需要上傳「內容」讓 AI 有素材可以填充。</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 20px;">
+                    <div class="concept-card">
+                        <h3>文件類型</h3>
+                        <ul style="font-size: 15px; padding-left: 18px;">
+                            <li>研究報告 PDF</li>
+                            <li>會議記錄</li>
+                            <li>企劃書</li>
+                            <li>產品規格</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h3>網路來源</h3>
+                        <ul style="font-size: 15px; padding-left: 18px;">
+                            <li>相關文章 URL</li>
+                            <li>YouTube 影片</li>
+                            <li>競品資訊</li>
+                            <li>產業新聞</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h3>貼上文字</h3>
+                        <ul style="font-size: 15px; padding-left: 18px;">
+                            <li>Email 內容</li>
+                            <li>筆記摘要</li>
+                            <li>訪談紀錄</li>
+                            <li>大綱草稿</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box warning" style="margin-top: 20px;">
+                    <strong>重要提醒：</strong>來源品質決定簡報品質！確保內容來源資訊正確、完整、相關性高。
+                </div>
+
+                <div class="box tip">
+                    <strong>建議：</strong>若有現成的簡報大綱或重點整理，也可以作為來源上傳，讓 AI 更了解你想要的內容結構。
+                </div>
+                <span class="page-number">12 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 13: 第三階段 - 魔法指令基本版 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="phase-badge phase-3">第三階段</span>
+                <h1>步驟三：魔法指令提示詞</h1>
+                <h2>基本指令模板</h2>
+
+                <div class="prompt-box">
+                    <p>請根據我上傳的內容來源，製作一份簡報。</p>
+                    <p style="margin-top: 15px;">簡報背景請使用我上傳的背景圖片：</p>
+                    <p>- 第一頁使用「封面頁.png」</p>
+                    <p>- 第二頁使用「目錄頁.png」</p>
+                    <p>- 內容頁面依據內容性質選擇對應的版型</p>
+                    <p>- 最後一頁使用「結尾頁.png」</p>
+                    <p style="margin-top: 15px;">請確保：</p>
+                    <p>- 每頁內容精簡，重點突出</p>
+                    <p>- 文字放置在背景圖片的空白區域</p>
+                    <p>- 整體風格一致</p>
+                </div>
+
+                <div class="box info" style="margin-top: 15px;">
+                    <strong>說明：</strong>這是最基本的指令模板，適合快速生成初版簡報。根據需求可以進一步擴充指令內容。
+                </div>
+                <span class="page-number">13 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 14: 第三階段 - 魔法指令進階版 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="phase-badge phase-3">第三階段</span>
+                <h1>進階指令模板</h1>
+
+                <div class="prompt-box" style="font-size: 15px;">
+                    <p>請根據我上傳的內容來源，製作一份 15 頁的專業簡報。</p>
+                    <p style="margin-top: 12px;"><strong>【背景圖片指定】</strong></p>
+                    <p>- 封面：使用「封面頁.png」，標題要大且醒目</p>
+                    <p>- 第 2 頁目錄：使用「目錄頁.png」，列出 4-5 個大綱重點</p>
+                    <p>- 章節開頭：使用「章節過場頁.png」</p>
+                    <p>- 說明性內容：使用「內文頁_純文字.png」，每頁 3-5 個重點</p>
+                    <p>- 需要對比時：使用「內文頁_雙欄.png」</p>
+                    <p>- 有視覺說明時：使用「內文頁_左圖右文.png」或「內文頁_右圖左文.png」</p>
+                    <p>- 結尾：使用「結尾頁.png」</p>
+                    <p style="margin-top: 12px;"><strong>【內容要求】</strong></p>
+                    <p>- 目標聽眾：公司主管層級</p>
+                    <p>- 語調：專業但不生硬</p>
+                    <p>- 每頁字數不超過 80 字</p>
+                    <p>- 多使用數據和具體案例</p>
+                    <p style="margin-top: 12px;"><strong>【格式要求】</strong></p>
+                    <p>- 標題使用行動導向的句子</p>
+                    <p>- 重點使用條列式呈現</p>
+                    <p>- 避免使用專業術語，若必要請加註解釋</p>
+                </div>
+                <span class="page-number">14 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 15: 第三階段 - 生成與檢視 -->
+        <div class="slide">
+            <div class="content-card">
+                <span class="phase-badge phase-3">第三階段</span>
+                <h1>步驟四：生成並檢視結果</h1>
+
+                <div class="step-box">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>送出指令後等待生成</strong><br>
+                        NotebookLM 會根據你的指令和來源，產出簡報內容
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>檢視初版成果</strong><br>
+                        確認內容是否正確、排版是否合適、有無遺漏重點
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>迭代調整</strong><br>
+                        若有不滿意的地方，用追問方式請 AI 修改特定頁面或內容
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">4</span>
+                    <div>
+                        <strong>下載或複製</strong><br>
+                        滿意後可下載 PDF，或將內容複製到 PowerPoint 進行最終編輯
+                    </div>
+                </div>
+
+                <div class="box tip">
+                    <strong>迭代範例：</strong><br>
+                    「第 5 頁的內容太多了，請精簡到 4 個重點」<br>
+                    「請把第 3 頁改用左圖右文的版型」<br>
+                    「結尾頁請加上行動呼籲」
+                </div>
+                <span class="page-number">15 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 16: 常見問題 1-2 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>常見問題與解決方案 (1/2)</h1>
+
+                <div class="faq-item">
+                    <h4>Q1：AI 沒有按照我指定的背景圖使用？</h4>
+                    <p><strong>解決方案：</strong>確認檔案命名是否正確且具描述性。在指令中更明確地指定「第 X 頁必須使用 XXX.png」，而非只說「適當選用」。也可以減少背景圖選項，讓 AI 更容易判斷。</p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Q2：生成的文字超出背景圖的文字區域？</h4>
+                    <p><strong>解決方案：</strong>在指令中明確限制每頁字數（如「每頁不超過 60 字」），或要求「每頁最多 4 個重點」。選擇留白空間更大的背景模板也有幫助。</p>
+                </div>
+
+                <div class="box info">
+                    <strong>核心原則：</strong>指令越明確，AI 越不容易出錯。當結果不如預期，先檢查指令是否有模糊空間。
+                </div>
+                <span class="page-number">16 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 17: 常見問題 3-5 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>常見問題與解決方案 (2/2)</h1>
+
+                <div class="faq-item">
+                    <h4>Q3：內容和我的來源資料不太相關？</h4>
+                    <p><strong>解決方案：</strong>檢查是否有勾選正確的來源。如果來源太多太雜，AI 可能抓錯重點。建議精選最相關的 3-5 個來源，並在指令中明確指出「重點參考 XXX 這份資料」。</p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Q4：簡報風格和品牌調性不符？</h4>
+                    <p><strong>解決方案：</strong>在指令中加入風格描述，如「語調專業正式」「使用商業用語」「避免俏皮表達」。若有品牌寫作指南，也可以貼上作為來源參考。</p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Q5：想要修改某一頁但不想重新生成全部？</h4>
+                    <p><strong>解決方案：</strong>使用追問功能，明確指出「請只修改第 X 頁」，並說明需要調整的內容。NotebookLM 會針對特定頁面進行修改，保留其他內容。</p>
+                </div>
+                <span class="page-number">17 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 18: 實戰案例 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>實戰案例：季度報告簡報</h1>
+
+                <div class="scenario-box">
+                    <h3>情境</h3>
+                    <p>行銷部門需要製作 Q4 業績報告簡報，給高階主管在會議中使用。有一份 20 頁的業績報告 PDF，需要在 30 分鐘內完成簡報初稿。</p>
+                </div>
+
+                <div class="two-column" style="margin-top: 20px;">
+                    <div>
+                        <h3>準備的模板（5 張）</h3>
+                        <ul style="font-size: 16px;">
+                            <li><code>封面頁_公司品牌.png</code></li>
+                            <li><code>目錄頁.png</code></li>
+                            <li><code>內文頁_純文字.png</code></li>
+                            <li><code>數據圖表頁.png</code></li>
+                            <li><code>結尾頁_謝謝.png</code></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>上傳的來源</h3>
+                        <ul style="font-size: 16px;">
+                            <li>Q4 業績報告.pdf（主要內容）</li>
+                            <li>去年同期報告.pdf（對比用）</li>
+                            <li>主管關注事項.txt（自己整理）</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box success" style="margin-top: 20px;">
+                    <strong>結果：</strong>15 分鐘內生成 12 頁簡報初稿，再花 15 分鐘微調細節，準時交付！
+                </div>
+                <span class="page-number">18 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 19: 本單元重點回顧 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>本單元重點回顧</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        <h3 style="color: white;">第一階段</h3>
+                        <p style="color: rgba(255,255,255,0.95);">
+                            <strong>選定骨架</strong><br>
+                            選擇合適的模板來源<br>
+                            避開複雜底圖<br>
+                            確保多種頁面類型
+                        </p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                        <h3 style="color: white;">第二階段</h3>
+                        <p style="color: rgba(255,255,255,0.95);">
+                            <strong>清理與命名</strong><br>
+                            刪除範例文字<br>
+                            另存為 PNG<br>
+                            命名即命令！
+                        </p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                        <h3 style="color: white;">第三階段</h3>
+                        <p style="color: rgba(255,255,255,0.95);">
+                            <strong>化學反應</strong><br>
+                            上傳背景+內容來源<br>
+                            使用魔法指令<br>
+                            迭代調整優化
+                        </p>
+                    </div>
+                </div>
+
+                <div class="box tip" style="margin-top: 25px; text-align: center; font-size: 20px;">
+                    <strong>核心心法：準備工作越精確，AI 產出品質越高！</strong>
+                </div>
+
+                <div class="box info" style="margin-top: 15px;">
+                    <strong>下一步：</strong>單元 7 將介紹「兩次作業法」，教你如何透過分階段指令，讓簡報品質再上一層樓！
+                </div>
+                <span class="page-number">19 / 20</span>
+            </div>
+        </div>
+
+        <!-- Slide 20: 下一單元預告 -->
+        <div class="slide">
+            <div class="content-card cover-card">
+                <h1 style="font-size: 42px;">下一單元預告</h1>
+                <p class="subtitle" style="font-size: 32px; margin-top: 30px;">
+                    <strong>單元 7：兩次作業法</strong>
+                </p>
+                <p class="subtitle" style="font-size: 18px; margin-top: 25px; line-height: 2;">
+                    為什麼一次指令不夠？了解「先骨架、後血肉」的策略<br>
+                    第一次作業：產出結構大綱<br>
+                    第二次作業：填充完整內容<br>
+                    如何在兩次之間進行人工審核與調整
+                </p>
+                <div class="tags" style="margin-top: 40px;">
+                    <span class="tag">分階段策略</span>
+                    <span class="tag">骨架優先</span>
+                    <span class="tag">品質把關</span>
+                    <span class="tag">迭代優化</span>
+                </div>
+                <div style="margin-top: 50px; display: flex; gap: 20px; justify-content: center;">
+                    <a href="單元目次.html" class="next-unit-btn" style="background: rgba(255,255,255,0.2); color: white; padding: 15px 35px; border-radius: 30px; text-decoration: none; font-size: 18px; font-weight: 600; border: 2px solid rgba(255,255,255,0.4); transition: all 0.3s ease;">回到目次</a>
+                    <a href="單元7-兩次作業法.html" class="next-unit-btn" style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 35px; border-radius: 30px; text-decoration: none; font-size: 18px; font-weight: 600; border: none; box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">下一單元：兩次作業法</a>
+                </div>
+                <span class="page-number" style="color: #666;">20 / 20</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 導航箭頭 -->
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">&#10094;</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">&#10095;</button>
+
+    <!-- 頁碼指示器 -->
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            updateButtons();
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'Home') goToSlide(0);
+            if (e.key === 'End') goToSlide(totalSlides - 1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            container.innerHTML = '';
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(index);
+                container.appendChild(dot);
+            });
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === index);
+            });
+
+            updateButtons();
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        function goToSlide(index) {
+            showSlide(index);
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單元 5 - 十五種資料視覺化圖表指令</title>
+    <style>
+        /* 基礎設定 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* === 導航列 === */
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .nav-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .nav-buttons { display: flex; gap: 12px; }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* === 導航箭頭 === */
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* === 投影片容器 === */
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            padding-top: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 20;
+        }
+
+        /* === 內容卡片 === */
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 45px 55px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* === 封面特殊樣式 === */
+        .cover-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(160deg, #0a0a1a 0%, #1a1a3e 40%, #0f2847 70%, #0a1628 100%);
+            color: white;
+        }
+
+        .cover-card .unit-badge {
+            background: linear-gradient(90deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3));
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            border-radius: 30px;
+            padding: 10px 30px;
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            color: #74b9ff;
+        }
+
+        .cover-card h1 {
+            font-size: 52px;
+            background: linear-gradient(90deg, #fff 0%, #74b9ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .cover-card .subtitle {
+            font-size: 24px;
+            color: #a0a0b0;
+            max-width: 700px;
+            line-height: 1.6;
+        }
+
+        .cover-card .tags {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cover-card .tag {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #b0b0c0;
+        }
+
+        /* 其他通用樣式 */
+        h1 { color: #1a1a2e; font-size: 38px; margin-bottom: 20px; border-bottom: 4px solid #3498db; padding-bottom: 12px; }
+        h2 { color: #16213e; font-size: 28px; margin: 25px 0 15px 0; }
+        h3 { color: #0f3460; font-size: 22px; margin: 20px 0 12px 0; }
+        p, li { font-size: 18px; line-height: 1.85; color: #444; margin-bottom: 12px; }
+        ul, ol { padding-left: 25px; }
+        li { margin-bottom: 10px; }
+
+        code {
+            background: #f0f2f5;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            color: #e74c3c;
+            font-size: 0.95em;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #74b9ff 0%, #a29bfe 100%);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .box {
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 5px solid;
+            font-size: 17px;
+        }
+        .info { background: #e3f2fd; border-color: #2196f3; color: #0d47a1; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .tip { background: #f3e5f5; border-color: #9c27b0; color: #4a148c; }
+        .example { background: #e8f5e9; border-color: #4caf50; color: #1b5e20; }
+
+        /* 提示詞區塊 */
+        .prompt-box {
+            background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            position: relative;
+        }
+        .prompt-box::before {
+            content: '提示詞範例';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .prompt-box p {
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+            font-size: 17px;
+            line-height: 1.8;
+            margin: 10px 0 0 0;
+        }
+
+        /* 情境卡片 */
+        .scenario-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            color: white;
+        }
+        .scenario-box h3 {
+            color: white;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .scenario-box p {
+            color: rgba(255,255,255,0.95);
+            font-size: 17px;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        .concept-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .concept-card:hover {
+            transform: translateY(-5px);
+            border-color: #74b9ff;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .concept-card h3 {
+            color: #1a1a2e;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+        }
+        .concept-card p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 0;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .feature-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .step-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 18px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #3498db;
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .comparison-table th {
+            background: #f8f9fa;
+            color: #1a1a2e;
+            font-weight: 700;
+        }
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .indicators {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 4000;
+            padding: 12px 25px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 30px;
+            backdrop-filter: blur(8px);
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dot:hover {
+            background: rgba(255,255,255,0.7);
+        }
+        .dot.active {
+            background: #74b9ff;
+            transform: scale(1.3);
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            right: 25px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* 滾動條美化 */
+        .content-card::-webkit-scrollbar {
+            width: 8px;
+        }
+        .content-card::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        /* 圖表類型卡片 */
+        .chart-type-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 15px;
+        }
+        .chart-type-card h3 {
+            color: #1a1a2e;
+            margin-top: 0;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chart-type-card .use-case {
+            background: #e3f2fd;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 15px;
+            color: #0d47a1;
+        }
+
+        /* 圖表圖示樣式 */
+        .chart-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        /* 小型概念卡片 */
+        .mini-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        .mini-card h4 {
+            color: #1a1a2e;
+            margin: 10px 0 5px 0;
+            font-size: 16px;
+        }
+        .mini-card p {
+            font-size: 14px;
+            color: #666;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 導航列 -->
+    <div class="nav-bar">
+        <div class="nav-title">單元 5 - 十五種資料視覺化圖表指令</div>
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="goToSlide(0)">首頁</button>
+            <button class="nav-btn" onclick="toggleFullscreen()">全螢幕</button>
+            <a href="單元目次.html" class="nav-btn">目次</a>
+            <a href="https://www.facebook.com/groups/2754139931432955" target="_blank" class="nav-btn">FB</a>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">YT</a>
+        </div>
+    </div>
+
+    <!-- 投影片內容 -->
+    <div class="slide-container">
+
+        <!-- Slide 1: 封面 -->
+        <div class="slide active">
+            <div class="content-card cover-card">
+                <div class="unit-badge">第二部分：簡報生成篇</div>
+                <h1>十五種資料視覺化圖表指令</h1>
+                <p class="subtitle">掌握數據呈現的藝術<br>讓 NotebookLM 為你生成專業圖表</p>
+                <div class="tags">
+                    <span class="tag">柱形圖/條形圖</span>
+                    <span class="tag">折線圖/面積圖</span>
+                    <span class="tag">餅圖/矩形樹圖</span>
+                    <span class="tag">散點圖/氣泡圖</span>
+                    <span class="tag">雷達圖/甘特圖</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 為什麼需要資料視覺化 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>為什麼需要資料視覺化？</h1>
+                <div class="scenario-box">
+                    <h3>情境：一堆數字 vs 一張圖表</h3>
+                    <p>「去年營收 1200 萬、今年 1500 萬、成長 25%」用文字表達平淡無奇，但一張上升的柱形圖瞬間讓人感受到成長的力度！</p>
+                </div>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="concept-card" style="text-align: center;">
+                        <h3>快速理解</h3>
+                        <p>人腦處理圖像的速度是文字的 60,000 倍</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3>發現洞察</h3>
+                        <p>圖表能揭示數據中隱藏的趨勢與異常</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3>說服力強</h3>
+                        <p>視覺化數據讓簡報更具專業感與說服力</p>
+                    </div>
+                </div>
+
+                <div class="box info" style="margin-top: 25px;">
+                    <strong>NotebookLM 的優勢：</strong>只要用對提示詞，AI 就能自動分析你的資料，建議最適合的圖表類型，甚至直接生成圖表程式碼！
+                </div>
+                <span class="page-number">2 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 3: 15種圖表總覽 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>15 種圖表類型總覽</h1>
+                <div class="concept-grid" style="grid-template-columns: repeat(5, 1fr); gap: 15px;">
+                    <div class="mini-card">
+                        <div class="chart-icon">|||||</div>
+                        <h4>柱形圖</h4>
+                        <p>比較數量</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">=====</div>
+                        <h4>條形圖</h4>
+                        <p>橫向比較</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">/\/\</div>
+                        <h4>折線圖</h4>
+                        <p>趨勢變化</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">~^~</div>
+                        <h4>面積圖</h4>
+                        <p>累積趨勢</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">O</div>
+                        <h4>餅圖</h4>
+                        <p>佔比分布</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">[##]</div>
+                        <h4>矩形樹圖</h4>
+                        <p>層級佔比</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">. . .</div>
+                        <h4>散點圖</h4>
+                        <p>相關分析</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">o O o</div>
+                        <h4>氣泡圖</h4>
+                        <p>三維比較</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">*</div>
+                        <h4>雷達圖</h4>
+                        <p>多維評估</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">o-o</div>
+                        <h4>框架圖</h4>
+                        <p>關係網絡</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">D</div>
+                        <h4>計量器</h4>
+                        <p>指標狀態</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">V</div>
+                        <h4>漏斗圖</h4>
+                        <p>流程轉換</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">===</div>
+                        <h4>甘特圖</h4>
+                        <p>專案時程</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">ABC</div>
+                        <h4>詞雲圖</h4>
+                        <p>關鍵詞頻</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="chart-icon">MAP</div>
+                        <h4>地圖</h4>
+                        <p>地理分布</p>
+                    </div>
+                </div>
+                <span class="page-number">3 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 4: 提示詞模板通用結構 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>圖表提示詞的通用結構</h1>
+                <p>掌握這個結構，任何圖表都能輕鬆生成！</p>
+
+                <div class="prompt-box" style="margin-top: 25px;">
+                    <p>請根據 [來源/資料描述]，生成一個 [圖表類型]，<br>
+                    用於呈現 [數據維度/比較對象]。<br>
+                    圖表標題：[標題名稱]<br>
+                    X軸/分類：[維度說明]<br>
+                    Y軸/數值：[數值說明]<br>
+                    請提供 [輸出格式：圖表描述/程式碼/SVG]</p>
+                </div>
+
+                <div class="two-column" style="margin-top: 25px;">
+                    <div>
+                        <h3>必要元素</h3>
+                        <ul>
+                            <li><strong>圖表類型</strong>：明確指定要什麼圖</li>
+                            <li><strong>數據來源</strong>：來自哪份資料</li>
+                            <li><strong>呈現目的</strong>：想表達什麼觀點</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>加分元素</h3>
+                        <ul>
+                            <li><strong>軸標籤</strong>：說明各軸代表什麼</li>
+                            <li><strong>配色需求</strong>：品牌色或特定風格</li>
+                            <li><strong>輸出格式</strong>：描述、程式碼或圖片</li>
+                        </ul>
+                    </div>
+                </div>
+                <span class="page-number">4 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 5: 柱形圖 Column Chart -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>1. 柱形圖 Column Chart</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>比較不同類別的數量差異</li>
+                            <li>顯示時間序列的數值變化</li>
+                            <li>展示排名或大小關係</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>各部門銷售額比較、月營收趨勢、產品銷量排行
+                        </div>
+                    </div>
+                    <div>
+                        <h3>不適用情境</h3>
+                        <ul>
+                            <li>類別過多（超過 10 個）</li>
+                            <li>需要顯示比例關係</li>
+                            <li>連續性數據的趨勢分析</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份銷售報告，生成一個柱形圖，<br>
+                    比較 2024 年各季度的營收表現。<br>
+                    X軸：Q1、Q2、Q3、Q4<br>
+                    Y軸：營收金額（單位：萬元）<br>
+                    請用不同顏色標示各季度，並在柱子上方顯示數值。</p>
+                </div>
+                <span class="page-number">5 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 6: 條形圖 Horizontal Bar Chart -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>2. 條形圖 Horizontal Bar Chart</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>類別名稱較長需要空間顯示</li>
+                            <li>比較多個項目的數值</li>
+                            <li>排名展示（由高到低排列）</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>員工滿意度調查結果、各國 GDP 排名、功能使用頻率統計
+                        </div>
+                    </div>
+                    <div>
+                        <h3>與柱形圖的差異</h3>
+                        <ul>
+                            <li>橫向排列，適合長標籤</li>
+                            <li>更容易閱讀排名關係</li>
+                            <li>適合展示在窄版面中</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份調查報告，生成一個水平條形圖，<br>
+                    展示「影響員工離職的十大因素」排名。<br>
+                    各因素由重要性高到低排列，<br>
+                    條形長度代表該因素被提及的百分比，<br>
+                    請在條形右側標示具體數值。</p>
+                </div>
+                <span class="page-number">6 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 7: 折線圖 Line Chart -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>3. 折線圖 Line Chart</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>展示數據隨時間的變化趨勢</li>
+                            <li>比較多組數據的趨勢差異</li>
+                            <li>預測未來走向</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>股價走勢、網站流量變化、溫度變化記錄
+                        </div>
+                    </div>
+                    <div>
+                        <h3>設計要點</h3>
+                        <ul>
+                            <li>多條線時用不同顏色區分</li>
+                            <li>關鍵點可標註數值</li>
+                            <li>趨勢線可加入平滑處理</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份報告的數據，生成一個折線圖，<br>
+                    展示過去 12 個月的「新用戶註冊數」與「活躍用戶數」趨勢。<br>
+                    X軸：月份（1月至12月）<br>
+                    Y軸：用戶數量<br>
+                    請用兩條不同顏色的線區分，並標示趨勢轉折點。</p>
+                </div>
+                <span class="page-number">7 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 8: 面積圖 Area Chart -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>4. 面積圖 Area Chart</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>強調數據的累積效果或總量</li>
+                            <li>展示組成部分隨時間的變化</li>
+                            <li>比較多個類別的貢獻度</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>各產品線營收貢獻、成本結構變化、市場份額演變
+                        </div>
+                    </div>
+                    <div>
+                        <h3>與折線圖的差異</h3>
+                        <ul>
+                            <li>填充區域強調「量」的概念</li>
+                            <li>堆疊面積圖可顯示總和</li>
+                            <li>視覺衝擊力更強</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份財務報告，生成一個堆疊面積圖，<br>
+                    展示過去五年各產品線（A、B、C）對總營收的貢獻變化。<br>
+                    X軸：年份（2020-2024）<br>
+                    Y軸：營收金額<br>
+                    請用不同顏色區分各產品線，並顯示總和趨勢。</p>
+                </div>
+                <span class="page-number">8 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 9: 餅圖 Pie Chart -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>5. 餅圖 Pie Chart</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>展示各部分佔整體的比例</li>
+                            <li>類別數量少（3-6 個最佳）</li>
+                            <li>強調「部分與整體」的關係</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>市場佔有率、預算分配、客戶來源比例
+                        </div>
+                    </div>
+                    <div>
+                        <h3>使用注意</h3>
+                        <ul>
+                            <li>類別超過 6 個會難以閱讀</li>
+                            <li>避免比例差異太小的數據</li>
+                            <li>可用環形圖增加變化</li>
+                        </ul>
+                        <div class="box warning">
+                            <strong>常見錯誤：</strong>各部分加總不等於 100%
+                        </div>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份報告，生成一個餅圖，<br>
+                    展示公司營收的地區分布比例。<br>
+                    請依比例大小排序各區塊，<br>
+                    並在每個區塊旁標示百分比數值，<br>
+                    最大的區塊請稍微突出顯示。</p>
+                </div>
+                <span class="page-number">9 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 10: 矩形樹圖 Treemap -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>6. 矩形樹圖 Treemap</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>展示層級結構的佔比關係</li>
+                            <li>類別數量多但有分組邏輯</li>
+                            <li>需要在有限空間展示大量數據</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>磁碟空間使用分析、產品類別銷售額、組織預算配置
+                        </div>
+                    </div>
+                    <div>
+                        <h3>優勢特點</h3>
+                        <ul>
+                            <li>比餅圖能容納更多類別</li>
+                            <li>透過顏色區分大類</li>
+                            <li>面積直覺反映數值大小</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份銷售報告，生成一個矩形樹狀圖，<br>
+                    展示各產品類別及其子類別的銷售額佔比。<br>
+                    大類別用不同顏色區分，<br>
+                    子類別在同一顏色系內以深淺變化呈現，<br>
+                    每個矩形內標示名稱與金額。</p>
+                </div>
+                <span class="page-number">10 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 11: 散點圖 Scatter Plot -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>7. 散點圖 Scatter Plot</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>分析兩個變數之間的關係</li>
+                            <li>發現數據的分布模式</li>
+                            <li>識別異常值或離群點</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>廣告投入與銷售額關係、身高與體重關聯、價格與銷量相關性
+                        </div>
+                    </div>
+                    <div>
+                        <h3>進階應用</h3>
+                        <ul>
+                            <li>加入趨勢線顯示相關性</li>
+                            <li>用顏色區分不同類別</li>
+                            <li>結合回歸分析</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份研究資料，生成一個散點圖，<br>
+                    分析「行銷預算」與「銷售成長率」之間的關係。<br>
+                    X軸：行銷預算（萬元）<br>
+                    Y軸：銷售成長率（%）<br>
+                    請加入趨勢線，並標示相關係數 R 值。</p>
+                </div>
+                <span class="page-number">11 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 12: 氣泡圖 Bubble Chart -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>8. 氣泡圖 Bubble Chart</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>同時比較三個維度的數據</li>
+                            <li>分析項目的相對重要性</li>
+                            <li>產品組合或市場定位分析</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>BCG 矩陣、產品利潤分析、風險評估矩陣
+                        </div>
+                    </div>
+                    <div>
+                        <h3>三個維度</h3>
+                        <ul>
+                            <li><strong>X軸：</strong>第一個數值變數</li>
+                            <li><strong>Y軸：</strong>第二個數值變數</li>
+                            <li><strong>氣泡大小：</strong>第三個數值變數</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份產品分析報告，生成一個氣泡圖，<br>
+                    分析各產品的「市場成長率」、「市佔率」與「營收規模」。<br>
+                    X軸：市佔率（%）<br>
+                    Y軸：市場成長率（%）<br>
+                    氣泡大小：代表該產品的年營收金額<br>
+                    請用不同顏色區分產品線。</p>
+                </div>
+                <span class="page-number">12 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 13: 雷達圖 Radar Chart -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>9. 雷達圖 Radar Chart</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>多維度能力評估與比較</li>
+                            <li>展示優劣勢分布</li>
+                            <li>比較不同對象的綜合表現</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>員工績效評估、產品功能比較、競品分析
+                        </div>
+                    </div>
+                    <div>
+                        <h3>設計要點</h3>
+                        <ul>
+                            <li>維度數量建議 5-10 個</li>
+                            <li>各維度使用相同的評分標準</li>
+                            <li>比較對象不宜超過 3-4 個</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份競品分析報告，生成一個雷達圖，<br>
+                    比較我們的產品與兩個主要競品在以下維度的表現：<br>
+                    價格、功能、易用性、客服、穩定性、擴展性<br>
+                    各維度評分範圍 1-10，<br>
+                    請用不同顏色的線條區分三個產品。</p>
+                </div>
+                <span class="page-number">13 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 14: 框架圖/網絡圖 Network Graph -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>10. 框架圖 Network Graph</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>展示實體之間的關係網絡</li>
+                            <li>社群媒體連結分析</li>
+                            <li>組織架構或知識圖譜</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>社交網絡分析、系統架構圖、概念關聯圖
+                        </div>
+                    </div>
+                    <div>
+                        <h3>組成元素</h3>
+                        <ul>
+                            <li><strong>節點：</strong>代表實體（人、物、概念）</li>
+                            <li><strong>連線：</strong>代表關係或互動</li>
+                            <li><strong>大小/顏色：</strong>表示重要性或分類</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份報告中的團隊協作數據，生成一個網絡關係圖，<br>
+                    展示各部門之間的協作頻率。<br>
+                    節點：各部門名稱<br>
+                    連線粗細：代表協作專案數量<br>
+                    節點大小：代表部門人數<br>
+                    請用不同顏色區分不同職能類型的部門。</p>
+                </div>
+                <span class="page-number">14 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 15: 計量器 Gauge Chart -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>11. 計量器 Gauge Chart</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>顯示單一指標的達成狀態</li>
+                            <li>即時監控儀表板</li>
+                            <li>KPI 目標達成度追蹤</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>業績達成率、客戶滿意度、系統效能指標
+                        </div>
+                    </div>
+                    <div>
+                        <h3>設計要點</h3>
+                        <ul>
+                            <li>設定清楚的範圍區間</li>
+                            <li>用顏色區分警戒/正常/優良</li>
+                            <li>顯示目標值與當前值</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份報告的 KPI 數據，生成一個計量器圖表，<br>
+                    展示本季「客戶滿意度」的達成狀況。<br>
+                    範圍：0-100 分<br>
+                    目標值：85 分<br>
+                    當前值：請從資料中擷取<br>
+                    請用紅、黃、綠三色區分不及格、待改善、達標三個區間。</p>
+                </div>
+                <span class="page-number">15 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 16: 漏斗圖 Funnel Chart -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>12. 漏斗圖 Funnel Chart</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>展示流程各階段的轉換率</li>
+                            <li>銷售或行銷漏斗分析</li>
+                            <li>識別流失最嚴重的環節</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>電商購物流程、求職招聘流程、用戶註冊轉換
+                        </div>
+                    </div>
+                    <div>
+                        <h3>關鍵指標</h3>
+                        <ul>
+                            <li>各階段的數量或比例</li>
+                            <li>階段間的轉換率</li>
+                            <li>整體漏斗轉換率</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份行銷報告，生成一個漏斗圖，<br>
+                    展示從「網站訪客」到「完成購買」的轉換流程：<br>
+                    1. 網站訪客 → 2. 瀏覽商品 → 3. 加入購物車 → 4. 進入結帳 → 5. 完成購買<br>
+                    請標示每個階段的人數與轉換率，<br>
+                    並特別標示轉換率最低的階段。</p>
+                </div>
+                <span class="page-number">16 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 17: 甘特圖 Gantt Chart -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>13. 甘特圖 Gantt Chart</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>專案時程規劃與追蹤</li>
+                            <li>任務排程與資源配置</li>
+                            <li>展示任務之間的相依關係</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>軟體開發專案、活動企劃時程、產品上市計畫
+                        </div>
+                    </div>
+                    <div>
+                        <h3>組成元素</h3>
+                        <ul>
+                            <li>任務名稱與負責人</li>
+                            <li>開始與結束日期</li>
+                            <li>任務進度百分比</li>
+                            <li>里程碑標記</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份專案計畫書，生成一個甘特圖，<br>
+                    展示專案各階段的時程安排：<br>
+                    包含任務名稱、負責人、起迄日期、目前進度<br>
+                    請用不同顏色區分不同階段（規劃、執行、測試、上線），<br>
+                    並標示關鍵里程碑。</p>
+                </div>
+                <span class="page-number">17 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 18: 詞雲圖 Word Cloud -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>14. 詞雲圖 Word Cloud</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>展示文本中的關鍵詞頻率</li>
+                            <li>視覺化意見回饋重點</li>
+                            <li>社群媒體輿情分析</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>問卷開放題分析、會議記錄重點、客戶評論摘要
+                        </div>
+                    </div>
+                    <div>
+                        <h3>設計要點</h3>
+                        <ul>
+                            <li>字體大小反映詞頻或重要性</li>
+                            <li>可用顏色區分情感（正/負）</li>
+                            <li>過濾無意義的停用詞</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份客戶回饋報告，生成一個詞雲圖，<br>
+                    展示客戶評論中最常提及的關鍵詞。<br>
+                    請過濾掉「的」、「是」、「我們」等常見詞，<br>
+                    正面評價用藍色系，負面評價用紅色系，<br>
+                    列出前 50 個最常見的關鍵詞。</p>
+                </div>
+                <span class="page-number">18 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 19: 地圖 Geo Map -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>15. 地圖 Geo Map</h1>
+                <div class="two-column">
+                    <div>
+                        <h3>適用情境</h3>
+                        <ul>
+                            <li>展示數據的地理分布</li>
+                            <li>區域市場分析</li>
+                            <li>銷售據點或服務覆蓋範圍</li>
+                        </ul>
+                        <div class="box example">
+                            <strong>最佳案例：</strong>各縣市銷售額、門市分布圖、疫情數據地圖
+                        </div>
+                    </div>
+                    <div>
+                        <h3>常見類型</h3>
+                        <ul>
+                            <li><strong>區域著色圖：</strong>用顏色深淺表示數值</li>
+                            <li><strong>標記地圖：</strong>用點或圖標標示位置</li>
+                            <li><strong>熱力地圖：</strong>展示密集程度</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>請根據這份銷售報告，生成一個台灣地圖視覺化圖表，<br>
+                    展示各縣市的銷售額分布。<br>
+                    用顏色深淺表示銷售額高低（深色=高、淺色=低），<br>
+                    請在每個縣市標示銷售金額，<br>
+                    並特別標註銷售額前三名的縣市。</p>
+                </div>
+                <span class="page-number">19 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 20: 圖表選擇對照表 - 比較關係 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>圖表選擇指南：依數據關係選圖表</h1>
+                <table class="comparison-table">
+                    <tr>
+                        <th style="width: 20%;">數據關係</th>
+                        <th style="width: 25%;">推薦圖表</th>
+                        <th style="width: 30%;">適用場景</th>
+                        <th style="width: 25%;">範例問題</th>
+                    </tr>
+                    <tr>
+                        <td><strong>比較</strong></td>
+                        <td>柱形圖、條形圖</td>
+                        <td>比較不同類別的數值大小</td>
+                        <td>「哪個產品賣得最好？」</td>
+                    </tr>
+                    <tr>
+                        <td><strong>趨勢</strong></td>
+                        <td>折線圖、面積圖</td>
+                        <td>展示數據隨時間的變化</td>
+                        <td>「營收是否持續成長？」</td>
+                    </tr>
+                    <tr>
+                        <td><strong>佔比</strong></td>
+                        <td>餅圖、矩形樹圖</td>
+                        <td>展示各部分佔整體的比例</td>
+                        <td>「各通路貢獻多少營收？」</td>
+                    </tr>
+                    <tr>
+                        <td><strong>相關</strong></td>
+                        <td>散點圖、氣泡圖</td>
+                        <td>分析變數之間的關聯性</td>
+                        <td>「廣告支出影響銷售嗎？」</td>
+                    </tr>
+                    <tr>
+                        <td><strong>分布</strong></td>
+                        <td>直方圖、箱形圖</td>
+                        <td>了解數據的分布特性</td>
+                        <td>「客戶年齡如何分布？」</td>
+                    </tr>
+                </table>
+                <span class="page-number">20 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 21: 圖表選擇對照表 - 特殊用途 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>圖表選擇指南：特殊用途</h1>
+                <table class="comparison-table">
+                    <tr>
+                        <th style="width: 20%;">用途</th>
+                        <th style="width: 25%;">推薦圖表</th>
+                        <th style="width: 30%;">適用場景</th>
+                        <th style="width: 25%;">範例問題</th>
+                    </tr>
+                    <tr>
+                        <td><strong>多維評估</strong></td>
+                        <td>雷達圖</td>
+                        <td>評估多個面向的綜合表現</td>
+                        <td>「產品各面向評分如何？」</td>
+                    </tr>
+                    <tr>
+                        <td><strong>流程轉換</strong></td>
+                        <td>漏斗圖</td>
+                        <td>分析流程各階段的流失</td>
+                        <td>「哪個環節流失最多？」</td>
+                    </tr>
+                    <tr>
+                        <td><strong>專案時程</strong></td>
+                        <td>甘特圖</td>
+                        <td>規劃與追蹤專案進度</td>
+                        <td>「專案時程如何安排？」</td>
+                    </tr>
+                    <tr>
+                        <td><strong>關係網絡</strong></td>
+                        <td>框架圖</td>
+                        <td>展示實體之間的連結關係</td>
+                        <td>「部門之間如何協作？」</td>
+                    </tr>
+                    <tr>
+                        <td><strong>地理分布</strong></td>
+                        <td>地圖</td>
+                        <td>展示數據的空間分布</td>
+                        <td>「哪個地區表現最好？」</td>
+                    </tr>
+                    <tr>
+                        <td><strong>關鍵詞分析</strong></td>
+                        <td>詞雲圖</td>
+                        <td>文本中的重點詞彙</td>
+                        <td>「客戶最常提到什麼？」</td>
+                    </tr>
+                    <tr>
+                        <td><strong>指標狀態</strong></td>
+                        <td>計量器</td>
+                        <td>即時監控單一KPI</td>
+                        <td>「目標達成了多少？」</td>
+                    </tr>
+                </table>
+                <span class="page-number">21 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 22: 快速選圖決策樹 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>快速選圖決策樹</h1>
+                <div class="scenario-box">
+                    <h3>問自己三個問題</h3>
+                    <p>1. 我想呈現什麼關係？（比較/趨勢/佔比/相關/分布）<br>
+                    2. 我有幾個維度的數據？（單一/兩個/三個以上）<br>
+                    3. 我的類別數量多嗎？（少於6個/6-15個/超過15個）</p>
+                </div>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 20px;">
+                    <div class="concept-card" style="border-top: 5px solid #3498db;">
+                        <h3>想比較大小</h3>
+                        <p>
+                            類別少 → <strong>柱形圖</strong><br>
+                            類別多 → <strong>條形圖</strong><br>
+                            需排名 → <strong>條形圖</strong>
+                        </p>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #e74c3c;">
+                        <h3>想看趨勢</h3>
+                        <p>
+                            單純趨勢 → <strong>折線圖</strong><br>
+                            強調總量 → <strong>面積圖</strong><br>
+                            多組比較 → <strong>折線圖</strong>
+                        </p>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #2ecc71;">
+                        <h3>想看佔比</h3>
+                        <p>
+                            類別少 → <strong>餅圖</strong><br>
+                            類別多 → <strong>矩形樹圖</strong><br>
+                            有層級 → <strong>矩形樹圖</strong>
+                        </p>
+                    </div>
+                </div>
+                <span class="page-number">22 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 23: 組合使用技巧 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>進階技巧：圖表組合使用</h1>
+                <p>複雜的報告往往需要多種圖表搭配，才能完整呈現分析結論。</p>
+
+                <div class="two-column" style="margin-top: 20px;">
+                    <div>
+                        <h3>經典組合一：營運報告</h3>
+                        <div class="box info">
+                            <ul style="padding-left: 20px; margin: 0;">
+                                <li><strong>折線圖</strong>：營收趨勢</li>
+                                <li><strong>餅圖</strong>：營收來源佔比</li>
+                                <li><strong>柱形圖</strong>：各部門績效比較</li>
+                                <li><strong>計量器</strong>：KPI 達成狀態</li>
+                            </ul>
+                        </div>
+
+                        <h3 style="margin-top: 20px;">經典組合二：行銷分析</h3>
+                        <div class="box info">
+                            <ul style="padding-left: 20px; margin: 0;">
+                                <li><strong>漏斗圖</strong>：轉換率分析</li>
+                                <li><strong>地圖</strong>：區域分布</li>
+                                <li><strong>散點圖</strong>：投入產出關係</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="prompt-box">
+                            <p>請根據這份季度報告，設計一個數據儀表板，包含：<br>
+                            1. 營收趨勢折線圖（按月）<br>
+                            2. 產品類別佔比餅圖<br>
+                            3. 區域銷售柱形圖<br>
+                            4. 業績達成計量器<br>
+                            請說明各圖表的配置建議。</p>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">23 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 24: NotebookLM 輸出格式 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>NotebookLM 圖表輸出格式選擇</h1>
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="concept-card">
+                        <h3>圖表描述</h3>
+                        <p>AI 用文字描述圖表應有的內容與設計</p>
+                        <div class="box success" style="margin-top: 10px; padding: 12px;">
+                            <strong>適用：</strong>快速確認方向、交給設計師製作
+                        </div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>程式碼輸出</h3>
+                        <p>提供 Python/JavaScript 等程式碼</p>
+                        <div class="box success" style="margin-top: 10px; padding: 12px;">
+                            <strong>適用：</strong>需要互動式圖表、整合到網頁
+                        </div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>表格數據</h3>
+                        <p>整理好的數據表格，方便貼到 Excel</p>
+                        <div class="box success" style="margin-top: 10px; padding: 12px;">
+                            <strong>適用：</strong>用 Excel/Google Sheets 製圖
+                        </div>
+                    </div>
+                </div>
+
+                <div class="prompt-box" style="margin-top: 25px;">
+                    <p>請根據報告數據，提供以下格式的圖表內容：<br>
+                    1. 詳細的圖表設計說明（標題、軸標、數據點）<br>
+                    2. 可直接複製的數據表格<br>
+                    3. 使用 Chart.js 繪製的 JavaScript 程式碼</p>
+                </div>
+                <span class="page-number">24 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 25: 常見錯誤與避免 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>常見圖表錯誤與避免方式</h1>
+                <div class="two-column">
+                    <div>
+                        <h3 style="color: #e74c3c;">常見錯誤</h3>
+                        <div class="box warning">
+                            <ul style="padding-left: 20px; margin: 0;">
+                                <li>餅圖各部分加總不等於 100%</li>
+                                <li>Y軸起點不從零，誇大差異</li>
+                                <li>使用 3D 效果導致視覺扭曲</li>
+                                <li>顏色太多、太花俏</li>
+                                <li>沒有標示單位或來源</li>
+                                <li>選錯圖表類型</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style="color: #27ae60;">正確做法</h3>
+                        <div class="box success">
+                            <ul style="padding-left: 20px; margin: 0;">
+                                <li>檢查數據加總是否合理</li>
+                                <li>Y軸從零開始或明確標示</li>
+                                <li>使用平面圖表，避免 3D</li>
+                                <li>控制顏色數量在 5-7 種內</li>
+                                <li>標註清楚的標題、單位、來源</li>
+                                <li>根據數據關係選擇圖表</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box tip" style="margin-top: 20px;">
+                    <strong>提示詞技巧：</strong>在提示詞中加入「請確保數據準確性，並標註資料來源頁碼」，讓 AI 更謹慎處理數據。
+                </div>
+                <span class="page-number">25 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 26: 重要提醒 - 數據準確性 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>重要提醒：數據準確性需驗證</h1>
+                <div class="scenario-box" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                    <h3>AI 生成的圖表數據可能有誤！</h3>
+                    <p>NotebookLM 會從來源中擷取數據，但可能發生解讀錯誤、數字遺漏或計算失誤。<br>
+                    <strong>務必在使用前核對原始來源！</strong></p>
+                </div>
+
+                <h3 style="margin-top: 25px;">驗證檢查清單</h3>
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card">
+                        <h3>數據層面</h3>
+                        <ul style="font-size: 15px; padding-left: 18px;">
+                            <li>數字是否與原文一致？</li>
+                            <li>單位是否正確？（萬 vs 千）</li>
+                            <li>總和是否合理？</li>
+                            <li>百分比加總是否為 100%？</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h3>呈現層面</h3>
+                        <ul style="font-size: 15px; padding-left: 18px;">
+                            <li>圖表類型是否適合？</li>
+                            <li>標題是否正確反映內容？</li>
+                            <li>軸標籤是否清楚？</li>
+                            <li>是否有誤導性的視覺設計？</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box info" style="margin-top: 20px;">
+                    <strong>黃金原則：</strong>AI 生成的圖表是「初稿」，不是「定稿」。永遠在發表前做最後確認！
+                </div>
+                <span class="page-number">26 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 27: 本單元重點回顧 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>本單元重點回顧</h1>
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <h3 style="color: white;">15 種圖表</h3>
+                        <p style="color: rgba(255,255,255,0.95);">柱形圖、條形圖、折線圖、面積圖、餅圖、矩形樹圖、散點圖、氣泡圖、雷達圖、框架圖、計量器、漏斗圖、甘特圖、詞雲圖、地圖</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        <h3 style="color: white;">選圖原則</h3>
+                        <p style="color: rgba(255,255,255,0.95);">比較→柱形/條形圖<br>趨勢→折線/面積圖<br>佔比→餅圖/矩形樹圖<br>相關→散點/氣泡圖</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                        <h3 style="color: white;">提示詞結構</h3>
+                        <p style="color: rgba(255,255,255,0.95);">指定圖表類型 + 數據來源 + 呈現目的 + 軸標說明 + 輸出格式</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                        <h3 style="color: white;">注意事項</h3>
+                        <p style="color: rgba(255,255,255,0.95);">務必驗證 AI 生成的數據準確性，核對原始來源後再使用</p>
+                    </div>
+                </div>
+
+                <div class="box success" style="text-align: center; font-size: 20px; margin-top: 25px;">
+                    <strong>掌握圖表指令，讓數據說出精彩故事！</strong>
+                </div>
+                <span class="page-number">27 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 28: 下一單元預告 -->
+        <div class="slide">
+            <div class="content-card cover-card">
+                <h1 style="font-size: 42px;">下一單元預告</h1>
+                <p class="subtitle" style="font-size: 32px; margin-top: 30px;">
+                    <strong>單元 6：簡報模板套用三階段法</strong>
+                </p>
+                <p class="subtitle" style="font-size: 18px; margin-top: 25px; line-height: 2;">
+                    學習如何將 NotebookLM 生成的內容<br>
+                    套用到專業簡報模板中<br>
+                    掌握「生成→調整→美化」三階段工作流程<br>
+                    快速產出高品質簡報
+                </p>
+                <div class="tags" style="margin-top: 40px;">
+                    <span class="tag">階段一：內容生成</span>
+                    <span class="tag">階段二：結構調整</span>
+                    <span class="tag">階段三：視覺美化</span>
+                    <span class="tag">模板套用技巧</span>
+                </div>
+                <div style="margin-top: 50px; display: flex; gap: 20px; justify-content: center;">
+                    <a href="單元目次.html" class="next-unit-btn" style="background: rgba(255,255,255,0.2); color: white; padding: 15px 35px; border-radius: 30px; text-decoration: none; font-size: 18px; font-weight: 600; border: 2px solid rgba(255,255,255,0.4); transition: all 0.3s ease;">回到目次</a>
+                    <a href="單元6-簡報模板套用三階段法.html" class="next-unit-btn" style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 35px; border-radius: 30px; text-decoration: none; font-size: 18px; font-weight: 600; border: none; box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">下一單元：簡報模板套用三階段法</a>
+                </div>
+                <span class="page-number" style="color: #666;">28 / 28</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 導航箭頭 -->
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">&#10094;</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">&#10095;</button>
+
+    <!-- 頁碼指示器 -->
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            updateButtons();
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'Home') goToSlide(0);
+            if (e.key === 'End') goToSlide(totalSlides - 1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            container.innerHTML = '';
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(index);
+                container.appendChild(dot);
+            });
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === index);
+            });
+
+            updateButtons();
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        function goToSlide(index) {
+            showSlide(index);
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

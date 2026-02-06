@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單元 13 - 實戰應用場景與工具選擇</title>
+    <style>
+        /* 基礎設定 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* === 導航列 === */
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .nav-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .nav-buttons { display: flex; gap: 12px; }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* === 導航箭頭 === */
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* === 投影片容器 === */
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            padding-top: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 20;
+        }
+
+        /* === 內容卡片 === */
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 45px 55px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* === 封面特殊樣式 === */
+        .cover-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(160deg, #667eea 0%, #764ba2 50%, #5a4f9e 100%);
+            color: white;
+        }
+
+        .cover-card .unit-badge {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 30px;
+            padding: 10px 30px;
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+
+        .cover-card h1 {
+            font-size: 48px;
+            background: linear-gradient(90deg, #fff 0%, #ffd700 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .cover-card .subtitle {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 700px;
+            line-height: 1.6;
+        }
+
+        .cover-card .tags {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cover-card .tag {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .instructor-info {
+            margin-top: 40px;
+            padding: 20px 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .instructor-info p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        /* 其他通用樣式 */
+        h1 { color: #667eea; font-size: 36px; margin-bottom: 20px; border-bottom: 4px solid #764ba2; padding-bottom: 12px; }
+        h2 { color: #5a4f9e; font-size: 26px; margin: 25px 0 15px 0; }
+        h3 { color: #667eea; font-size: 20px; margin: 20px 0 12px 0; }
+        p, li { font-size: 17px; line-height: 1.8; color: #444; margin-bottom: 10px; }
+        ul, ol { padding-left: 25px; }
+        li { margin-bottom: 8px; }
+
+        code {
+            background: #f0f2f5;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            color: #764ba2;
+            font-size: 0.95em;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #667eea 0%, #764ba2 100%);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .box {
+            padding: 18px 22px;
+            border-radius: 12px;
+            margin: 18px 0;
+            border-left: 5px solid;
+            font-size: 16px;
+        }
+        .info { background: #e8f4fd; border-color: #667eea; color: #4a5568; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .tip { background: #f3e5f5; border-color: #764ba2; color: #4a148c; }
+        .example { background: #e8f5e9; border-color: #4caf50; color: #1b5e20; }
+
+        /* === 場景情境區塊 === */
+        .scenario-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 2px solid #667eea;
+            position: relative;
+        }
+        .scenario-box::before {
+            content: attr(data-icon);
+            position: absolute;
+            top: -20px;
+            left: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        .scenario-box h3 {
+            margin-top: 10px;
+            color: #667eea;
+            font-size: 22px;
+        }
+        .scenario-box .scenario-desc {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 4px solid #764ba2;
+        }
+
+        /* === 決策流程圖 === */
+        .decision-tree {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            color: white;
+        }
+        .decision-tree h3 {
+            color: #ffd700;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 24px;
+        }
+        .decision-node {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 10px 0;
+            text-align: center;
+            position: relative;
+        }
+        .decision-node.question {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        .decision-node.answer {
+            background: rgba(40, 167, 69, 0.3);
+            border-color: #28a745;
+        }
+        .decision-branch {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .decision-branch .branch-item {
+            flex: 1;
+            max-width: 200px;
+        }
+        .branch-label {
+            background: rgba(255,215,0,0.2);
+            color: #ffd700;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .decision-arrow {
+            text-align: center;
+            color: #ffd700;
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        /* === 操作流程圖 === */
+        .flow-chart {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+        .flow-step {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 15px 20px;
+            text-align: center;
+            min-width: 140px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .flow-step:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        .flow-step .step-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .flow-step .step-title {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 14px;
+        }
+        .flow-arrow {
+            color: #764ba2;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        /* === 快速參考表 === */
+        .quick-reference {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .quick-reference th, .quick-reference td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .quick-reference th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 700;
+        }
+        .quick-reference tr:hover {
+            background: #f8f9fa;
+        }
+        .quick-reference .tool-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 13px;
+            display: inline-block;
+            margin: 2px;
+        }
+
+        /* 功能卡片 */
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 22px;
+            margin: 15px 0;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 15px;
+            padding: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+        .feature-card h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .feature-card .icon {
+            font-size: 26px;
+        }
+
+        /* 步驟區塊 */
+        .step-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 18px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        .step-box:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        /* 小技巧提示框 */
+        .tip-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 2px dashed #764ba2;
+            border-radius: 15px;
+            padding: 18px;
+            margin: 18px 0;
+        }
+        .tip-box h4 {
+            color: #764ba2;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tip-box h4::before {
+            content: '💡';
+        }
+
+        /* 概念卡片網格 */
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+            margin-top: 20px;
+        }
+        .concept-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 22px;
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .concept-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+        .concept-card h3 {
+            color: #667eea;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+        }
+        .concept-card p {
+            font-size: 15px;
+            color: #555;
+            margin-bottom: 0;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-top: 15px;
+        }
+
+        .three-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        /* 組合使用模式 */
+        .combo-pattern {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 15px 0;
+            color: white;
+        }
+        .combo-pattern h3 {
+            color: white;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .combo-tools {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        .combo-tool {
+            background: rgba(255,255,255,0.2);
+            padding: 12px 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .combo-arrow {
+            font-size: 24px;
+            color: #ffd700;
+        }
+
+        /* FAQ 區塊 */
+        .faq-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid #667eea;
+        }
+        .faq-item .question {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 17px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .faq-item .question::before {
+            content: 'Q';
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .faq-item .answer {
+            color: #555;
+            padding-left: 38px;
+            font-size: 15px;
+        }
+
+        /* A/B 測試卡片 */
+        .ab-test-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            border: 2px solid;
+            text-align: center;
+        }
+        .ab-test-card.version-a { border-color: #28a745; }
+        .ab-test-card.version-b { border-color: #ffc107; }
+        .ab-test-card.version-c { border-color: #dc3545; }
+        .ab-test-card h4 {
+            margin-bottom: 10px;
+        }
+
+        /* 應用案例卡片 */
+        .use-case-card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px;
+            margin: 10px 0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+        .use-case-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+        .use-case-card h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .use-case-card p {
+            font-size: 14px;
+            color: #666;
+            margin: 0;
+        }
+
+        /* 頁碼指示器 */
+        .indicators {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 4000;
+            padding: 12px 25px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 30px;
+            backdrop-filter: blur(8px);
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dot:hover {
+            background: rgba(255,255,255,0.7);
+        }
+        .dot.active {
+            background: #ffd700;
+            transform: scale(1.3);
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            right: 25px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* 滾動條美化 */
+        .content-card::-webkit-scrollbar {
+            width: 8px;
+        }
+        .content-card::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb:hover {
+            background: #5a4f9e;
+        }
+
+        /* 下一單元按鈕 */
+        .next-unit-btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        }
+        .next-unit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.4);
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* 碩博士技巧區塊 */
+        .academic-tips {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            color: white;
+        }
+        .academic-tips h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+        .academic-tips ul {
+            list-style: none;
+            padding: 0;
+        }
+        .academic-tips li {
+            color: rgba(255,255,255,0.95);
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .academic-tips li:last-child {
+            border-bottom: none;
+        }
+        .academic-tips li::before {
+            content: '📚 ';
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 導航列 -->
+    <div class="nav-bar">
+        <div class="nav-title">單元 13 - 實戰應用場景與工具選擇</div>
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="goToSlide(0)">首頁</button>
+            <button class="nav-btn" onclick="toggleFullscreen()">全螢幕</button>
+            <a href="單元目次.html" class="nav-btn">目次</a>
+            <a href="https://www.facebook.com/groups/2754139831432955" target="_blank" class="nav-btn">FB</a>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">YT</a>
+        </div>
+    </div>
+
+    <!-- 投影片內容 -->
+    <div class="slide-container">
+
+        <!-- Slide 1: 封面 -->
+        <div class="slide active">
+            <div class="content-card cover-card">
+                <div class="unit-badge">第三部分：視覺美化篇</div>
+                <h1>實戰應用場景與工具選擇</h1>
+                <p class="subtitle">四大後製工具的最佳組合策略<br>讓你在任何情境都能選對工具</p>
+                <div class="tags">
+                    <span class="tag">PDNob 文字編輯</span>
+                    <span class="tag">NotebookLM 編輯器</span>
+                    <span class="tag">Canva Pro</span>
+                    <span class="tag">Lovart</span>
+                    <span class="tag">決策樹</span>
+                </div>
+                <div class="instructor-info">
+                    <p>NotebookLM 進階課程系列</p>
+                    <p>從需求分析到工具選擇的完整指南</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 本單元學習目標 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>本單元學習目標</h1>
+                <p style="font-size: 20px; margin-bottom: 25px;">掌握四種後製工具的實戰應用，學會根據情境快速選擇最佳工具組合</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card">
+                        <h3><span class="icon">🎯</span> 場景分析能力</h3>
+                        <p>學會分析不同工作情境的需求特徵，快速判斷應該使用哪種工具</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3><span class="icon">🔧</span> 工具選擇決策</h3>
+                        <p>掌握工具選擇決策樹，在任何情況下都能做出正確選擇</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3><span class="icon">🔄</span> 組合使用策略</h3>
+                        <p>了解多工具組合的常見模式，發揮工具間的協同效益</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3><span class="icon">📊</span> 實戰案例演練</h3>
+                        <p>透過三大實戰場景，深入理解工具選擇的實際應用</p>
+                    </div>
+                </div>
+
+                <div class="box info" style="margin-top: 25px;">
+                    <strong>核心理念：</strong>沒有最好的工具，只有最適合的工具。根據需求特徵選擇工具，才能達到最高效率！
+                </div>
+                <span class="page-number">2 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 3: 四大工具回顧 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>四大後製工具快速回顧</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="concept-card" style="text-align: center;">
+                        <h3 style="justify-content: center;">PDNob</h3>
+                        <p style="font-size: 32px; margin: 15px 0;">📝</p>
+                        <p><strong>文字編輯</strong><br>精準修改數據<br>快速文字替換<br>批量處理</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3 style="justify-content: center;">NotebookLM</h3>
+                        <p style="font-size: 32px; margin: 15px 0;">🤖</p>
+                        <p><strong>AI 編輯器</strong><br>智慧內容調整<br>結構重組<br>風格統一</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3 style="justify-content: center;">Canva Pro</h3>
+                        <p style="font-size: 32px; margin: 15px 0;">🎨</p>
+                        <p><strong>視覺升級</strong><br>魔法抓取<br>模板套用<br>品牌統一</p>
+                    </div>
+                    <div class="concept-card" style="text-align: center;">
+                        <h3 style="justify-content: center;">Lovart</h3>
+                        <p style="font-size: 32px; margin: 15px 0;">✨</p>
+                        <p><strong>深度編輯</strong><br>AI 圖片生成<br>風格遷移<br>創意設計</p>
+                    </div>
+                </div>
+
+                <div class="tip-box">
+                    <h4>工具定位小結</h4>
+                    <p><strong>PDNob</strong> = 精準快速 | <strong>NotebookLM 編輯器</strong> = AI 智慧 | <strong>Canva Pro</strong> = 視覺美化 | <strong>Lovart</strong> = 創意無限</p>
+                </div>
+                <span class="page-number">3 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 4: 場景一標題 -->
+        <div class="slide">
+            <div class="content-card cover-card" style="background: linear-gradient(160deg, #1e3c72 0%, #2a5298 50%, #1e3c72 100%);">
+                <div class="unit-badge" style="background: rgba(255,215,0,0.3); border-color: #ffd700;">實戰場景 1</div>
+                <h1 style="font-size: 44px;">商務報告的數據更新</h1>
+                <p class="subtitle" style="font-size: 22px;">
+                    季度報告需要更新最新數據<br>
+                    如何在最短時間內完成精準修改？
+                </p>
+                <div class="tags">
+                    <span class="tag">數據更新</span>
+                    <span class="tag">精準修改</span>
+                    <span class="tag">效率優先</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 場景一需求分析 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>場景一：商務報告的數據更新</h1>
+
+                <div class="scenario-box" data-icon="📊">
+                    <h3>情境描述</h3>
+                    <div class="scenario-desc">
+                        <p>你是公司的業務主管，每季度需要向高層報告業績。上季度用 NotebookLM 生成的簡報架構很好，但現在需要將舊數據替換為新季度的最新數據。時間緊迫，明天就要報告！</p>
+                    </div>
+                </div>
+
+                <h2>需求分析</h2>
+                <div class="two-column">
+                    <div>
+                        <div class="feature-card">
+                            <h3><span class="icon">🎯</span> 主要需求</h3>
+                            <ul>
+                                <li>更新銷售數字（金額、百分比）</li>
+                                <li>替換日期和時間資訊</li>
+                                <li>修正產品名稱或客戶名稱</li>
+                                <li>保持原有簡報結構不變</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="feature-card">
+                            <h3><span class="icon">⚡</span> 關鍵限制</h3>
+                            <ul>
+                                <li>時間緊迫（數小時內完成）</li>
+                                <li>數據必須 100% 精準</li>
+                                <li>不需要改變視覺設計</li>
+                                <li>簡報結構已經完善</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">5 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 6: 場景一工具選擇 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>場景一：工具選擇與理由</h1>
+
+                <div class="combo-pattern">
+                    <h3>推薦工具組合</h3>
+                    <div class="combo-tools">
+                        <div class="combo-tool">
+                            <div style="font-size: 28px;">📝</div>
+                            <div>PDNob</div>
+                            <div style="font-size: 12px; opacity: 0.8;">主要工具</div>
+                        </div>
+                        <span class="combo-arrow">+</span>
+                        <div class="combo-tool">
+                            <div style="font-size: 28px;">🤖</div>
+                            <div>NotebookLM 編輯器</div>
+                            <div style="font-size: 12px; opacity: 0.8;">輔助檢查</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h2>選擇理由</h2>
+                <div class="two-column">
+                    <div class="feature-card">
+                        <h3><span class="icon">📝</span> 為什麼選 PDNob？</h3>
+                        <ul>
+                            <li><strong>精準定位</strong> - 快速找到需要修改的數字</li>
+                            <li><strong>批量替換</strong> - 一次替換所有相同數據</li>
+                            <li><strong>保持格式</strong> - 不會破壞原有排版</li>
+                            <li><strong>速度快</strong> - 幾分鐘完成所有修改</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h3><span class="icon">🤖</span> NotebookLM 編輯器的角色</h3>
+                        <ul>
+                            <li><strong>數據檢查</strong> - AI 幫忙確認數據一致性</li>
+                            <li><strong>文字潤飾</strong> - 調整因數據變化需更新的描述</li>
+                            <li><strong>邏輯驗證</strong> - 確保分析結論與新數據吻合</li>
+                        </ul>
+                    </div>
+                </div>
+                <span class="page-number">6 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 7: 場景一操作流程 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>場景一：操作流程</h1>
+
+                <div class="flow-chart">
+                    <div class="flow-step">
+                        <div class="step-icon">📄</div>
+                        <div class="step-title">開啟 PDF</div>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="step-icon">🔍</div>
+                        <div class="step-title">搜尋舊數據</div>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="step-icon">📝</div>
+                        <div class="step-title">PDNob 替換</div>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="step-icon">🤖</div>
+                        <div class="step-title">AI 檢查</div>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="step-icon">✅</div>
+                        <div class="step-title">匯出完成</div>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>用 PDNob 開啟簡報 PDF</strong><br>
+                        使用「搜尋與取代」功能，列出所有需要更新的數據點
+                    </div>
+                </div>
+                <div class="step-box">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>批量替換數字</strong><br>
+                        例如：將「Q3」全部替換為「Q4」，將「1,250萬」替換為「1,480萬」
+                    </div>
+                </div>
+                <div class="step-box">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>NotebookLM 編輯器檢查</strong><br>
+                        將更新後的內容貼入，請 AI 確認數據一致性和邏輯正確性
+                    </div>
+                </div>
+                <div class="step-box">
+                    <span class="step-number">4</span>
+                    <div>
+                        <strong>匯出並最終確認</strong><br>
+                        匯出 PDF，人工快速瀏覽確認無誤後交付
+                    </div>
+                </div>
+
+                <div class="box success">
+                    <strong>預估時間：</strong>30-60 分鐘（視數據量而定）
+                </div>
+                <span class="page-number">7 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 8: 場景二標題 -->
+        <div class="slide">
+            <div class="content-card cover-card" style="background: linear-gradient(160deg, #11998e 0%, #38ef7d 50%, #11998e 100%);">
+                <div class="unit-badge" style="background: rgba(255,255,255,0.3); border-color: white;">實戰場景 2</div>
+                <h1 style="font-size: 44px;">學術海報的結構重組</h1>
+                <p class="subtitle" style="font-size: 22px;">
+                    研究海報需要重新排版和視覺升級<br>
+                    如何打造專業學術視覺？
+                </p>
+                <div class="tags">
+                    <span class="tag">結構調整</span>
+                    <span class="tag">視覺升級</span>
+                    <span class="tag">學術風格</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: 場景二需求分析 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>場景二：學術海報的結構重組</h1>
+
+                <div class="scenario-box" data-icon="🎓">
+                    <h3>情境描述</h3>
+                    <div class="scenario-desc">
+                        <p>你是研究生，用 NotebookLM 生成了研究海報的初稿。指導教授看過後建議調整章節順序，並希望視覺效果更專業，以便在國際研討會上展示。距離會議還有一週。</p>
+                    </div>
+                </div>
+
+                <h2>需求分析</h2>
+                <div class="two-column">
+                    <div>
+                        <div class="feature-card">
+                            <h3><span class="icon">🎯</span> 主要需求</h3>
+                            <ul>
+                                <li>調整章節順序（方法→結果→討論）</li>
+                                <li>重新組織內容區塊佈局</li>
+                                <li>提升整體視覺專業度</li>
+                                <li>加入學校 Logo 和配色</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="feature-card">
+                            <h3><span class="icon">⚡</span> 關鍵要求</h3>
+                            <ul>
+                                <li>符合學術海報規範</li>
+                                <li>視覺清晰、層次分明</li>
+                                <li>可輸出高解析度列印</li>
+                                <li>風格專業但不浮誇</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">9 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 10: 場景二工具選擇 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>場景二：工具選擇與理由</h1>
+
+                <div class="combo-pattern" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    <h3>推薦工具組合</h3>
+                    <div class="combo-tools">
+                        <div class="combo-tool">
+                            <div style="font-size: 28px;">🎨</div>
+                            <div>Canva Pro</div>
+                            <div style="font-size: 12px; opacity: 0.8;">主要工具</div>
+                        </div>
+                        <span class="combo-arrow">+</span>
+                        <div class="combo-tool">
+                            <div style="font-size: 28px;">✨</div>
+                            <div>Lovart</div>
+                            <div style="font-size: 12px; opacity: 0.8;">圖片處理</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h2>選擇理由</h2>
+                <div class="two-column">
+                    <div class="feature-card">
+                        <h3><span class="icon">🎨</span> 為什麼選 Canva Pro？</h3>
+                        <ul>
+                            <li><strong>魔法抓取</strong> - 快速分離並重組元素</li>
+                            <li><strong>學術模板</strong> - 專業海報模板可參考</li>
+                            <li><strong>品牌套件</strong> - 設定學校配色一鍵套用</li>
+                            <li><strong>高品質輸出</strong> - 支援列印級 PDF</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h3><span class="icon">✨</span> Lovart 的角色</h3>
+                        <ul>
+                            <li><strong>研究流程圖</strong> - AI 生成專業示意圖</li>
+                            <li><strong>背景優化</strong> - 創造適合的視覺背景</li>
+                            <li><strong>圖表美化</strong> - 提升數據圖表質感</li>
+                        </ul>
+                    </div>
+                </div>
+                <span class="page-number">10 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 11: 場景二操作技巧 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>場景二：操作技巧詳解</h1>
+
+                <div class="step-box" style="border-left-color: #11998e;">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>Canva 魔法抓取分離元素</strong><br>
+                        上傳原始 PDF → 使用魔法抓取 → 將標題、內容區塊、圖表分別獨立 → 自由拖曳重新排版
+                    </div>
+                </div>
+
+                <div class="step-box" style="border-left-color: #11998e;">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>套用學術風格模板</strong><br>
+                        搜尋「academic poster」或「research poster」→ 選擇適合的佈局結構 → 將內容填入對應區塊
+                    </div>
+                </div>
+
+                <div class="step-box" style="border-left-color: #11998e;">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>Lovart 生成研究示意圖</strong><br>
+                        描述研究流程或概念 → AI 生成專業示意圖 → 下載後插入 Canva 海報中
+                    </div>
+                </div>
+
+                <div class="step-box" style="border-left-color: #11998e;">
+                    <span class="step-number">4</span>
+                    <div>
+                        <strong>品牌套件統一視覺</strong><br>
+                        上傳學校 Logo → 設定校徽配色為品牌色 → 一鍵將所有元素套用品牌色彩
+                    </div>
+                </div>
+
+                <div class="tip-box">
+                    <h4>學術海報設計小技巧</h4>
+                    <p>標題字體大於 72pt、內文至少 24pt | 使用 2-3 種顏色即可 | 圖文比例約 6:4 | 留白讓內容呼吸</p>
+                </div>
+                <span class="page-number">11 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 12: 場景三標題 -->
+        <div class="slide">
+            <div class="content-card cover-card" style="background: linear-gradient(160deg, #f093fb 0%, #f5576c 50%, #f093fb 100%);">
+                <div class="unit-badge" style="background: rgba(255,255,255,0.3); border-color: white;">實戰場景 3</div>
+                <h1 style="font-size: 44px;">行銷提案的創意測試</h1>
+                <p class="subtitle" style="font-size: 22px;">
+                    行銷提案需要多版本創意測試<br>
+                    如何快速產出 A/B/C 三種風格？
+                </p>
+                <div class="tags">
+                    <span class="tag">A/B 測試</span>
+                    <span class="tag">多版本</span>
+                    <span class="tag">創意發想</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 13: 場景三需求分析 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>場景三：行銷提案的創意測試</h1>
+
+                <div class="scenario-box" data-icon="💡">
+                    <h3>情境描述</h3>
+                    <div class="scenario-desc">
+                        <p>你是行銷企劃，老闆要求針對新產品提案準備三種不同風格的簡報版本，讓客戶選擇偏好的方向。內容相同，但視覺風格需要差異明顯，以便進行 A/B/C 測試。</p>
+                    </div>
+                </div>
+
+                <h2>三種風格需求</h2>
+                <div class="three-column">
+                    <div class="ab-test-card version-a">
+                        <h4 style="color: #28a745;">A 版本：專業穩重</h4>
+                        <p style="font-size: 14px;">深藍配色<br>簡約圖表<br>正式字體<br>商務風格</p>
+                    </div>
+                    <div class="ab-test-card version-b">
+                        <h4 style="color: #ffc107;">B 版本：活潑創新</h4>
+                        <p style="font-size: 14px;">亮色系<br>插畫風格<br>圓潤元素<br>年輕活力</p>
+                    </div>
+                    <div class="ab-test-card version-c">
+                        <h4 style="color: #dc3545;">C 版本：科技未來</h4>
+                        <p style="font-size: 14px;">暗色科技感<br>漸層光影<br>幾何元素<br>前衛風格</p>
+                    </div>
+                </div>
+
+                <div class="box warning">
+                    <strong>挑戰：</strong>內容完全相同，但需要在一天內產出三種視覺差異明顯的版本！
+                </div>
+                <span class="page-number">13 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 14: 場景三工具組合策略 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>場景三：全工具組合策略</h1>
+
+                <div class="combo-pattern" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h3>四大工具全面出動</h3>
+                    <div class="combo-tools">
+                        <div class="combo-tool">
+                            <div style="font-size: 24px;">🤖</div>
+                            <div>NotebookLM</div>
+                            <div style="font-size: 11px; opacity: 0.8;">內容基礎</div>
+                        </div>
+                        <span class="combo-arrow">→</span>
+                        <div class="combo-tool">
+                            <div style="font-size: 24px;">🎨</div>
+                            <div>Canva Pro</div>
+                            <div style="font-size: 11px; opacity: 0.8;">版本 A</div>
+                        </div>
+                        <span class="combo-arrow">+</span>
+                        <div class="combo-tool">
+                            <div style="font-size: 24px;">✨</div>
+                            <div>Lovart</div>
+                            <div style="font-size: 11px; opacity: 0.8;">版本 B/C</div>
+                        </div>
+                        <span class="combo-arrow">+</span>
+                        <div class="combo-tool">
+                            <div style="font-size: 24px;">📝</div>
+                            <div>PDNob</div>
+                            <div style="font-size: 11px; opacity: 0.8;">微調統一</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div>
+                        <h3>版本 A：Canva Pro 主導</h3>
+                        <ul>
+                            <li>使用商務專業模板</li>
+                            <li>品牌套件設定深藍色系</li>
+                            <li>素材庫選擇正式圖片</li>
+                            <li>最快 30 分鐘完成</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>版本 B/C：Lovart 發揮創意</h3>
+                        <ul>
+                            <li>AI 生成風格化背景</li>
+                            <li>客製化插畫/科技元素</li>
+                            <li>風格遷移創造獨特視覺</li>
+                            <li>各約 45 分鐘完成</li>
+                        </ul>
+                    </div>
+                </div>
+                <span class="page-number">14 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 15: 場景三操作流程 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>場景三：A/B/C 版本製作流程</h1>
+
+                <div class="step-box" style="border-left-color: #28a745;">
+                    <span class="step-number">A</span>
+                    <div>
+                        <strong>版本 A - Canva Pro 快速產出</strong><br>
+                        上傳原始簡報 → 套用「商務專業」模板 → 設定深藍品牌色 → 替換為正式商務圖片 → 30分鐘完成
+                    </div>
+                </div>
+
+                <div class="step-box" style="border-left-color: #ffc107;">
+                    <span class="step-number">B</span>
+                    <div>
+                        <strong>版本 B - Lovart 創意插畫</strong><br>
+                        複製版本 A → Lovart 生成活潑插畫 → 替換為明亮配色 → 加入圓潤裝飾元素 → 45分鐘完成
+                    </div>
+                </div>
+
+                <div class="step-box" style="border-left-color: #dc3545;">
+                    <span class="step-number">C</span>
+                    <div>
+                        <strong>版本 C - Lovart 科技風格</strong><br>
+                        複製版本 A → Lovart 生成科技感背景 → 深色配色搭配漸層 → 加入幾何光影效果 → 45分鐘完成
+                    </div>
+                </div>
+
+                <div class="step-box" style="border-left-color: #667eea;">
+                    <span class="step-number">!</span>
+                    <div>
+                        <strong>PDNob 最終統一</strong><br>
+                        確認三版本的文字內容完全一致 → 修正任何因套用模板導致的文字錯誤 → 統一匯出格式
+                    </div>
+                </div>
+
+                <div class="box success">
+                    <strong>總時間估算：</strong>約 2-3 小時完成三種風格版本，比從零設計節省 80% 時間！
+                </div>
+                <span class="page-number">15 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 16: 工具選擇決策樹 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>工具選擇決策樹</h1>
+
+                <div class="decision-tree">
+                    <h3>根據需求快速選擇工具</h3>
+
+                    <div class="decision-node question">你的主要需求是什麼？</div>
+                    <div class="decision-arrow">↓</div>
+
+                    <div class="decision-branch">
+                        <div class="branch-item">
+                            <span class="branch-label">修改文字/數據</span>
+                            <div class="decision-node answer">📝 PDNob</div>
+                        </div>
+                        <div class="branch-item">
+                            <span class="branch-label">調整結構/潤飾</span>
+                            <div class="decision-node answer">🤖 NotebookLM</div>
+                        </div>
+                        <div class="branch-item">
+                            <span class="branch-label">美化視覺</span>
+                            <div class="decision-node answer">🎨 Canva Pro</div>
+                        </div>
+                        <div class="branch-item">
+                            <span class="branch-label">創意生成</span>
+                            <div class="decision-node answer">✨ Lovart</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tip-box">
+                    <h4>快速判斷口訣</h4>
+                    <p><strong>改數字</strong>用 PDNob | <strong>改結構</strong>用 NotebookLM | <strong>改外觀</strong>用 Canva | <strong>要創意</strong>用 Lovart</p>
+                </div>
+                <span class="page-number">16 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 17: 詳細決策流程圖 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>詳細決策流程圖</h1>
+
+                <div class="decision-tree">
+                    <div class="decision-node question">Step 1：是否需要修改「文字內容」？</div>
+                    <div class="decision-branch">
+                        <div class="branch-item">
+                            <span class="branch-label">是，且是精準替換</span>
+                            <div class="decision-node answer">PDNob 直接處理</div>
+                        </div>
+                        <div class="branch-item">
+                            <span class="branch-label">是，且需要潤飾重寫</span>
+                            <div class="decision-node answer">NotebookLM 編輯器</div>
+                        </div>
+                        <div class="branch-item">
+                            <span class="branch-label">否</span>
+                            <div class="decision-node" style="background: rgba(255,255,255,0.05);">進入 Step 2</div>
+                        </div>
+                    </div>
+
+                    <div class="decision-arrow">↓</div>
+
+                    <div class="decision-node question">Step 2：是否需要「視覺美化」？</div>
+                    <div class="decision-branch">
+                        <div class="branch-item">
+                            <span class="branch-label">是，套模板即可</span>
+                            <div class="decision-node answer">Canva Pro</div>
+                        </div>
+                        <div class="branch-item">
+                            <span class="branch-label">是，需要獨特創意</span>
+                            <div class="decision-node answer">Lovart + Canva</div>
+                        </div>
+                        <div class="branch-item">
+                            <span class="branch-label">否，只要微調</span>
+                            <div class="decision-node answer">PDNob 足夠</div>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">17 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 18: 快速參考表 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>情境對應工具：快速參考表</h1>
+
+                <table class="quick-reference">
+                    <tr>
+                        <th style="width: 35%;">工作情境</th>
+                        <th style="width: 40%;">推薦工具</th>
+                        <th style="width: 25%;">預估時間</th>
+                    </tr>
+                    <tr>
+                        <td>更新季度報告數據</td>
+                        <td><span class="tool-tag">PDNob</span></td>
+                        <td>30-60 分鐘</td>
+                    </tr>
+                    <tr>
+                        <td>修正錯字或名稱</td>
+                        <td><span class="tool-tag">PDNob</span></td>
+                        <td>5-15 分鐘</td>
+                    </tr>
+                    <tr>
+                        <td>重新組織章節順序</td>
+                        <td><span class="tool-tag">NotebookLM</span><span class="tool-tag">Canva</span></td>
+                        <td>1-2 小時</td>
+                    </tr>
+                    <tr>
+                        <td>潤飾文字表達</td>
+                        <td><span class="tool-tag">NotebookLM</span></td>
+                        <td>30-60 分鐘</td>
+                    </tr>
+                    <tr>
+                        <td>更換簡報背景風格</td>
+                        <td><span class="tool-tag">Canva Pro</span></td>
+                        <td>20-40 分鐘</td>
+                    </tr>
+                    <tr>
+                        <td>加入品牌視覺</td>
+                        <td><span class="tool-tag">Canva Pro</span></td>
+                        <td>30-60 分鐘</td>
+                    </tr>
+                    <tr>
+                        <td>生成獨特插畫</td>
+                        <td><span class="tool-tag">Lovart</span></td>
+                        <td>15-30 分鐘/張</td>
+                    </tr>
+                    <tr>
+                        <td>創意風格探索</td>
+                        <td><span class="tool-tag">Lovart</span><span class="tool-tag">Canva</span></td>
+                        <td>1-2 小時</td>
+                    </tr>
+                </table>
+                <span class="page-number">18 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 19: 組合使用常見模式 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>組合使用的常見模式</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="combo-pattern" style="margin: 0;">
+                        <h3 style="font-size: 18px;">模式一：效率優先</h3>
+                        <div class="combo-tools" style="margin: 10px 0;">
+                            <div class="combo-tool" style="padding: 8px 15px;">NotebookLM</div>
+                            <span class="combo-arrow">→</span>
+                            <div class="combo-tool" style="padding: 8px 15px;">PDNob</div>
+                        </div>
+                        <p style="font-size: 14px; color: rgba(255,255,255,0.9);">生成後快速修正，最短時間交付</p>
+                    </div>
+
+                    <div class="combo-pattern" style="margin: 0; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                        <h3 style="font-size: 18px;">模式二：品質優先</h3>
+                        <div class="combo-tools" style="margin: 10px 0;">
+                            <div class="combo-tool" style="padding: 8px 15px;">NotebookLM</div>
+                            <span class="combo-arrow">→</span>
+                            <div class="combo-tool" style="padding: 8px 15px;">Canva</div>
+                        </div>
+                        <p style="font-size: 14px; color: rgba(255,255,255,0.9);">生成後視覺升級，專業呈現</p>
+                    </div>
+
+                    <div class="combo-pattern" style="margin: 0; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <h3 style="font-size: 18px;">模式三：創意優先</h3>
+                        <div class="combo-tools" style="margin: 10px 0;">
+                            <div class="combo-tool" style="padding: 8px 15px;">NotebookLM</div>
+                            <span class="combo-arrow">→</span>
+                            <div class="combo-tool" style="padding: 8px 15px;">Lovart</div>
+                            <span class="combo-arrow">→</span>
+                            <div class="combo-tool" style="padding: 8px 15px;">Canva</div>
+                        </div>
+                        <p style="font-size: 14px; color: rgba(255,255,255,0.9);">AI 生成獨特視覺，最大創意發揮</p>
+                    </div>
+
+                    <div class="combo-pattern" style="margin: 0; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
+                        <h3 style="font-size: 18px;">模式四：全方位</h3>
+                        <div class="combo-tools" style="margin: 10px 0;">
+                            <div class="combo-tool" style="padding: 8px 12px; font-size: 13px;">NotebookLM</div>
+                            <span class="combo-arrow" style="font-size: 18px;">→</span>
+                            <div class="combo-tool" style="padding: 8px 12px; font-size: 13px;">PDNob</div>
+                            <span class="combo-arrow" style="font-size: 18px;">→</span>
+                            <div class="combo-tool" style="padding: 8px 12px; font-size: 13px;">Canva</div>
+                            <span class="combo-arrow" style="font-size: 18px;">→</span>
+                            <div class="combo-tool" style="padding: 8px 12px; font-size: 13px;">Lovart</div>
+                        </div>
+                        <p style="font-size: 14px; color: rgba(255,255,255,0.9);">完整工作流程，打造頂級成品</p>
+                    </div>
+                </div>
+                <span class="page-number">19 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 20: NotebookLM 15大應用案例 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>NotebookLM 15大應用案例</h1>
+                <p style="margin-bottom: 20px;">除了簡報製作，NotebookLM 還能成為你的多功能 AI 助手</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                    <div class="use-case-card">
+                        <h4>1. 私人顧問</h4>
+                        <p>上傳專業書籍，隨時諮詢特定領域問題</p>
+                    </div>
+                    <div class="use-case-card">
+                        <h4>2. 跨域激盪想法</h4>
+                        <p>結合不同領域資料，產生創新觀點</p>
+                    </div>
+                    <div class="use-case-card">
+                        <h4>3. 分析歷屆試題</h4>
+                        <p>上傳考古題，AI 分析出題趨勢</p>
+                    </div>
+                    <div class="use-case-card">
+                        <h4>4. AI 提問閱讀</h4>
+                        <p>邊讀邊問，深度理解文章內容</p>
+                    </div>
+                    <div class="use-case-card">
+                        <h4>5. 分析寫作風格</h4>
+                        <p>學習特定作者的寫作技巧</p>
+                    </div>
+                    <div class="use-case-card">
+                        <h4>6. 會議記錄整理</h4>
+                        <p>上傳錄音逐字稿，自動摘要重點</p>
+                    </div>
+                    <div class="use-case-card">
+                        <h4>7. 法規條文解讀</h4>
+                        <p>上傳法條，用白話解釋複雜規定</p>
+                    </div>
+                    <div class="use-case-card">
+                        <h4>8. 產品手冊問答</h4>
+                        <p>上傳說明書，快速找到操作方法</p>
+                    </div>
+                    <div class="use-case-card">
+                        <h4>9. 競品分析報告</h4>
+                        <p>匯入多份報告，比較分析差異</p>
+                    </div>
+                    <div class="use-case-card">
+                        <h4>10. 學術文獻綜述</h4>
+                        <p>批量分析論文，整理研究脈絡</p>
+                    </div>
+                    <div class="use-case-card">
+                        <h4>11. 客戶回饋分析</h4>
+                        <p>分析評論趨勢，找出改進方向</p>
+                    </div>
+                    <div class="use-case-card">
+                        <h4>12. 合約條款審查</h4>
+                        <p>標註關鍵條款，降低法律風險</p>
+                    </div>
+                </div>
+                <span class="page-number">20 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 21: NotebookLM 更多應用 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>NotebookLM 更多應用案例</h1>
+
+                <div class="two-column">
+                    <div>
+                        <div class="use-case-card">
+                            <h4>13. 技術文檔問答</h4>
+                            <p>上傳 API 文檔，快速找到實作方法</p>
+                        </div>
+                        <div class="use-case-card">
+                            <h4>14. 投資研究分析</h4>
+                            <p>彙整財報資料，產生投資洞察</p>
+                        </div>
+                        <div class="use-case-card">
+                            <h4>15. 個人知識庫</h4>
+                            <p>建立專屬 AI，隨時檢索過去筆記</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="academic-tips">
+                            <h3>碩博士生專屬技巧</h3>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="border-bottom: 1px solid rgba(255,255,255,0.2); padding: 12px 0;">
+                                    <strong>快速抓重點</strong><br>
+                                    上傳長篇論文，請 AI 摘要核心論點與研究發現
+                                </li>
+                                <li style="border-bottom: 1px solid rgba(255,255,255,0.2); padding: 12px 0;">
+                                    <strong>搭配筆記對照觀點</strong><br>
+                                    上傳自己的筆記和原文，AI 幫你比對理解是否正確
+                                </li>
+                                <li style="padding: 12px 0;">
+                                    <strong>整理多篇文獻架構</strong><br>
+                                    批量上傳相關論文，AI 幫你整理研究脈絡與缺口
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tip-box">
+                    <h4>活用秘訣</h4>
+                    <p>NotebookLM 的價值在於「以你的資料為基礎」進行 AI 對話，上傳的資料品質決定了回答品質！</p>
+                </div>
+                <span class="page-number">21 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 22: FAQ 常見問題 1 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>常見問題 FAQ（上）</h1>
+
+                <div class="faq-item">
+                    <div class="question">一定要用 Canva Pro 嗎？免費版不行嗎？</div>
+                    <div class="answer">免費版可以做基本編輯，但「魔法抓取」是 Pro 專屬功能。如果只需要簡單套模板，免費版足夠；若要快速分離重組 PDF 元素，Pro 版效率高很多。</div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="question">PDNob 和 NotebookLM 編輯器有什麼差別？</div>
+                    <div class="answer">PDNob 是「精準定點修改」，你告訴它改什麼就改什麼；NotebookLM 編輯器是「AI 理解後修改」，可以潤飾語句、調整語氣、重組結構。簡單替換用 PDNob，需要理解內容的修改用 NotebookLM。</div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="question">什麼時候該用 Lovart 而不是 Canva？</div>
+                    <div class="answer">當你需要「獨一無二」的視覺時用 Lovart。Canva 的素材庫雖然豐富，但大家都能用；Lovart 可以根據你的描述生成專屬圖片，適合需要差異化創意的場合。</div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="question">四種工具全部都要學嗎？</div>
+                    <div class="answer">建議至少熟練「PDNob + Canva」組合，這能應付 80% 的需求。NotebookLM 編輯器和 Lovart 是進階應用，當基本組合無法滿足時再學習。</div>
+                </div>
+                <span class="page-number">22 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 23: FAQ 常見問題 2 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>常見問題 FAQ（下）</h1>
+
+                <div class="faq-item">
+                    <div class="question">如何確保多工具協作時格式不跑掉？</div>
+                    <div class="answer">關鍵是「統一中間格式」。建議使用 PDF 作為各工具間的傳遞格式，因為 PDF 最能保持原始排版。匯出 PDF → 編輯 → 再匯出 PDF，可減少格式問題。</div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="question">時間緊迫時，哪個工具最快？</div>
+                    <div class="answer">如果只改數字文字：PDNob 最快（分鐘級）。如果要美化外觀：Canva 套模板最快（30分鐘內）。如果內容結構要改：NotebookLM 編輯器比手動快。</div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="question">Lovart 生成的圖片品質如何？</div>
+                    <div class="answer">品質通常足以用於簡報和數位展示。若要印刷使用，建議選擇較高解析度輸出，並在 Canva 中進一步調整尺寸。風格一致性需要多次嘗試調整 Prompt。</div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="question">NotebookLM 生成的簡報，後製一定需要這麼多工具嗎？</div>
+                    <div class="answer">不一定！如果 NotebookLM 生成的結果已經很好，可能只需要 PDNob 做微調。工具的多寡取決於你對成品的要求程度，不是每次都要用滿四種工具。</div>
+                </div>
+                <span class="page-number">23 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 24: 工具選擇總結表 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>工具選擇總結對照表</h1>
+
+                <table class="quick-reference">
+                    <tr>
+                        <th>工具</th>
+                        <th>最適合</th>
+                        <th>不適合</th>
+                        <th>學習難度</th>
+                    </tr>
+                    <tr>
+                        <td><strong>PDNob</strong></td>
+                        <td>精準文字替換、批量修改</td>
+                        <td>複雜排版、視覺設計</td>
+                        <td style="color: #28a745;">低</td>
+                    </tr>
+                    <tr>
+                        <td><strong>NotebookLM 編輯器</strong></td>
+                        <td>內容潤飾、結構調整</td>
+                        <td>視覺美化、精準定位</td>
+                        <td style="color: #28a745;">低</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Canva Pro</strong></td>
+                        <td>視覺升級、模板套用</td>
+                        <td>複雜動畫、精密印刷</td>
+                        <td style="color: #ffc107;">中</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lovart</strong></td>
+                        <td>創意生成、獨特視覺</td>
+                        <td>精準控制、快速產出</td>
+                        <td style="color: #ffc107;">中</td>
+                    </tr>
+                </table>
+
+                <div class="box success" style="margin-top: 25px;">
+                    <strong>記住：</strong>選擇工具的原則是「用最少的工具達成目標」。能用一個解決就不用兩個，簡單直接最高效！
+                </div>
+                <span class="page-number">24 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 25: 本單元重點回顧 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>本單元重點回顧</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <h3 style="color: white;">三大實戰場景</h3>
+                        <p style="color: rgba(255,255,255,0.95);">
+                            商務報告數據更新<br>
+                            學術海報結構重組<br>
+                            行銷提案創意測試
+                        </p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%); color: #333;">
+                        <h3 style="color: #333;">決策樹思維</h3>
+                        <p>
+                            改數字→PDNob<br>
+                            改結構→NotebookLM<br>
+                            改外觀→Canva<br>
+                            要創意→Lovart
+                        </p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                        <h3 style="color: white;">組合使用模式</h3>
+                        <p style="color: rgba(255,255,255,0.95);">
+                            效率優先模式<br>
+                            品質優先模式<br>
+                            創意優先模式<br>
+                            全方位模式
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flow-chart" style="margin-top: 25px;">
+                    <div class="flow-step">
+                        <div class="step-icon">📋</div>
+                        <div class="step-title">分析需求</div>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="step-icon">🔍</div>
+                        <div class="step-title">決策樹判斷</div>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="step-icon">🔧</div>
+                        <div class="step-title">選擇工具</div>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="step-icon">⚡</div>
+                        <div class="step-title">高效執行</div>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="step-icon">✅</div>
+                        <div class="step-title">完美成品</div>
+                    </div>
+                </div>
+                <span class="page-number">25 / 26</span>
+            </div>
+        </div>
+
+        <!-- Slide 26: 結尾頁 -->
+        <div class="slide">
+            <div class="content-card cover-card">
+                <h1 style="font-size: 42px;">下一單元預告</h1>
+                <p class="subtitle" style="font-size: 32px; margin-top: 30px;">
+                    <strong>單元 14：Chrome 擴充程式安裝與使用</strong>
+                </p>
+                <p class="subtitle" style="font-size: 18px; margin-top: 25px; line-height: 2;">
+                    提升 NotebookLM 效率的必備擴充程式<br>
+                    一鍵擷取網頁內容到筆記本<br>
+                    自動化工作流程設定<br>
+                    瀏覽器整合技巧大全
+                </p>
+                <div class="tags" style="margin-top: 40px;">
+                    <span class="tag">Chrome 擴充程式</span>
+                    <span class="tag">網頁擷取</span>
+                    <span class="tag">自動化</span>
+                    <span class="tag">效率工具</span>
+                </div>
+                <div style="margin-top: 50px; display: flex; gap: 20px; justify-content: center;">
+                    <a href="單元目次.html" class="next-unit-btn back-btn">回到目次</a>
+                    <a href="單元14-Chrome擴充程式安裝與使用.html" class="next-unit-btn">下一單元：Chrome 擴充程式</a>
+                </div>
+                <span class="page-number" style="color: rgba(255,255,255,0.6);">26 / 26</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 導航箭頭 -->
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">&#10094;</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">&#10095;</button>
+
+    <!-- 頁碼指示器 -->
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            updateButtons();
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'Home') goToSlide(0);
+            if (e.key === 'End') goToSlide(totalSlides - 1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            container.innerHTML = '';
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(index);
+                container.appendChild(dot);
+            });
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === index);
+            });
+
+            updateButtons();
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        function goToSlide(index) {
+            showSlide(index);
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單元 3 - 內容生成類型總覽</title>
+    <style>
+        /* 基礎設定 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* === 導航列 === */
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .nav-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .nav-buttons { display: flex; gap: 12px; }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* === 導航箭頭 === */
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* === 投影片容器 === */
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            padding-top: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 20;
+        }
+
+        /* === 內容卡片 === */
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 45px 55px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* === 封面特殊樣式 === */
+        .cover-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(160deg, #0a0a1a 0%, #1a1a3e 40%, #0f2847 70%, #0a1628 100%);
+            color: white;
+        }
+
+        .cover-card .unit-badge {
+            background: linear-gradient(90deg, rgba(52, 152, 219, 0.3), rgba(155, 89, 182, 0.3));
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            border-radius: 30px;
+            padding: 10px 30px;
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            color: #74b9ff;
+        }
+
+        .cover-card h1 {
+            font-size: 52px;
+            background: linear-gradient(90deg, #fff 0%, #74b9ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .cover-card .subtitle {
+            font-size: 24px;
+            color: #a0a0b0;
+            max-width: 700px;
+            line-height: 1.6;
+        }
+
+        .cover-card .tags {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cover-card .tag {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #b0b0c0;
+        }
+
+        /* 其他通用樣式 */
+        h1 { color: #1a1a2e; font-size: 38px; margin-bottom: 20px; border-bottom: 4px solid #3498db; padding-bottom: 12px; }
+        h2 { color: #16213e; font-size: 28px; margin: 25px 0 15px 0; }
+        h3 { color: #0f3460; font-size: 22px; margin: 20px 0 12px 0; }
+        p, li { font-size: 18px; line-height: 1.85; color: #444; margin-bottom: 12px; }
+        ul, ol { padding-left: 25px; }
+        li { margin-bottom: 10px; }
+
+        code {
+            background: #f0f2f5;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            color: #e74c3c;
+            font-size: 0.95em;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #74b9ff 0%, #a29bfe 100%);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .box {
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 5px solid;
+            font-size: 17px;
+        }
+        .info { background: #e3f2fd; border-color: #2196f3; color: #0d47a1; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .tip { background: #f3e5f5; border-color: #9c27b0; color: #4a148c; }
+        .example { background: #e8f5e9; border-color: #4caf50; color: #1b5e20; }
+
+        /* 提示詞區塊 */
+        .prompt-box {
+            background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            position: relative;
+        }
+        .prompt-box::before {
+            content: '💬 提示詞範例';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 4px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .prompt-box p {
+            color: #00ff88;
+            font-family: 'Consolas', monospace;
+            font-size: 17px;
+            line-height: 1.8;
+            margin: 10px 0 0 0;
+        }
+
+        /* 情境卡片 */
+        .scenario-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            color: white;
+        }
+        .scenario-box h3 {
+            color: white;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .scenario-box p {
+            color: rgba(255,255,255,0.95);
+            font-size: 17px;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        .concept-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .concept-card:hover {
+            transform: translateY(-5px);
+            border-color: #74b9ff;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .concept-card h3 {
+            color: #1a1a2e;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+        }
+        .concept-card p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 0;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .feature-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .step-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 18px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #3498db;
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .comparison-table th {
+            background: #f8f9fa;
+            color: #1a1a2e;
+            font-weight: 700;
+        }
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .indicators {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 4000;
+            padding: 12px 25px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 30px;
+            backdrop-filter: blur(8px);
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dot:hover {
+            background: rgba(255,255,255,0.7);
+        }
+        .dot.active {
+            background: #74b9ff;
+            transform: scale(1.3);
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            right: 25px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* 滾動條美化 */
+        .content-card::-webkit-scrollbar {
+            width: 8px;
+        }
+        .content-card::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+
+        /* 風格預覽卡片 */
+        .style-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #dee2e6;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .style-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .style-card .style-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        .style-card h4 {
+            color: #1a1a2e;
+            margin: 0 0 8px 0;
+            font-size: 18px;
+        }
+        .style-card p {
+            font-size: 14px;
+            color: #666;
+            margin: 0;
+        }
+
+        /* 類型徽章 */
+        .type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .badge-audio { background: #e3f2fd; color: #1976d2; }
+        .badge-doc { background: #f3e5f5; color: #7b1fa2; }
+        .badge-visual { background: #e8f5e9; color: #388e3c; }
+        .badge-study { background: #fff3e0; color: #f57c00; }
+    </style>
+</head>
+<body>
+
+    <!-- 導航列 -->
+    <div class="nav-bar">
+        <div class="nav-title">📚 單元 3 - 內容生成類型總覽</div>
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="goToSlide(0)">🏠 首頁</button>
+            <button class="nav-btn" onclick="toggleFullscreen()">🖥️ 全螢幕</button>
+            <a href="單元目次.html" class="nav-btn">📋 目次</a>
+            <a href="https://www.facebook.com/groups/2754139931432955" target="_blank" class="nav-btn">📘 FB</a>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">🎥 YT</a>
+        </div>
+    </div>
+
+    <!-- 投影片內容 -->
+    <div class="slide-container">
+
+        <!-- Slide 1: 封面 -->
+        <div class="slide active">
+            <div class="content-card cover-card">
+                <div class="unit-badge">第二部分：簡報生成篇</div>
+                <h1>內容生成類型總覽</h1>
+                <p class="subtitle">掌握 NotebookLM 的 10+ 種工件類型<br>選擇最適合你目的的輸出格式</p>
+                <div class="tags">
+                    <span class="tag">🎙️ 語音摘要</span>
+                    <span class="tag">📊 智慧簡報</span>
+                    <span class="tag">❓ 自動測驗</span>
+                    <span class="tag">🃏 記憶閃卡</span>
+                    <span class="tag">🧠 心智圖</span>
+                    <span class="tag">🎨 五種神級風格</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 本單元學習目標 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>🎯 本單元學習目標</h1>
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card" style="border-top: 5px solid #3498db;">
+                        <h3>📋 認識所有工件類型</h3>
+                        <p>完整了解 NotebookLM 可生成的 10 種以上內容格式，包含音訊、文件、視覺化等類型</p>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #e74c3c;">
+                        <h3>🎨 預覽五大神級風格</h3>
+                        <p>搶先認識抽象背景、黏土動畫、漫畫、黑板、像素等簡報風格的視覺效果</p>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #2ecc71;">
+                        <h3>🎯 掌握選擇框架</h3>
+                        <p>學會根據目的、受眾、時間三大要素，選擇最適合的工件類型</p>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #9b59b6;">
+                        <h3>💬 學會控制提示詞</h3>
+                        <p>掌握語音摘要、簡報風格、測驗難度等關鍵提示詞技巧</p>
+                    </div>
+                </div>
+                <div class="box info" style="margin-top: 25px;">
+                    <strong>💡 為什麼這很重要？</strong>選對工件類型，才能讓你的內容以最有效的方式傳達給目標受眾！
+                </div>
+                <span class="page-number">2 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 3: 工件類型總覽 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>📦 NotebookLM 工件類型總覽</h1>
+                <p>NotebookLM 提供多種內容生成格式，我們可以分為四大類別：</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(4, 1fr); margin-top: 20px;">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%); color: white;">
+                        <h3 style="color: white;">🎵 音訊類</h3>
+                        <p style="color: rgba(255,255,255,0.9);">語音摘要</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%); color: white;">
+                        <h3 style="color: white;">📄 文件類</h3>
+                        <p style="color: rgba(255,255,255,0.9);">摘要報告、常見問題、學習指南、時間軸、目錄</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%); color: white;">
+                        <h3 style="color: white;">🎨 視覺類</h3>
+                        <p style="color: rgba(255,255,255,0.9);">簡報、心智圖</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%); color: white;">
+                        <h3 style="color: white;">📝 學習類</h3>
+                        <p style="color: rgba(255,255,255,0.9);">測驗、學習卡</p>
+                    </div>
+                </div>
+
+                <div class="box tip" style="margin-top: 25px;">
+                    <strong>🎯 核心觀念：</strong>不同工件適合不同情境。接下來我們會逐一介紹每種類型的特色與最佳使用時機！
+                </div>
+                <span class="page-number">3 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 4: 語音摘要 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>🎙️ 語音摘要</h1>
+                <p>NotebookLM 最受歡迎的功能！將你的資料轉換成兩位 AI 主持人的自然對話節目。</p>
+
+                <div class="two-column" style="margin-top: 20px;">
+                    <div>
+                        <h3>✨ 核心特色</h3>
+                        <ul class="feature-list">
+                            <li><span class="feature-icon">🎭</span><div><strong>兩位 AI 主持人</strong><br>一男一女自然對話，有互動、有笑點</div></li>
+                            <li><span class="feature-icon">⏱️</span><div><strong>5-10 分鐘生成</strong><br>生成時間較長，但值得等待</div></li>
+                            <li><span class="feature-icon">📥</span><div><strong>可下載 MP3</strong><br>離線收聽，隨時隨地學習</div></li>
+                            <li><span class="feature-icon">🎯</span><div><strong>可自訂重點</strong><br>透過提示詞指定討論焦點</div></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>🎯 最佳使用情境</h3>
+                        <div class="scenario-box" style="margin-top: 10px;">
+                            <h3>🚗 通勤時「聽」研究報告</h3>
+                            <p>把 50 頁的報告變成 15 分鐘的語音摘要，開車或搭捷運時就能掌握重點！</p>
+                        </div>
+                        <div class="scenario-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                            <h3>🏃 運動時複習學習內容</h3>
+                            <p>健身房跑步機上聽課程內容整理，一邊運動一邊學習！</p>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">4 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 5: 語音摘要 提示詞範例 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>💬 語音摘要 生成提示詞技巧</h1>
+                <p>透過提示詞，你可以控制語音摘要 的內容方向和風格！</p>
+
+                <h3 style="margin-top: 20px;">🎯 指定討論重點</h3>
+                <div class="prompt-box">
+                    <p>「請特別聚焦在第三章的案例分析，深入討論其成功因素」</p>
+                </div>
+
+                <h3>🎭 控制對話風格</h3>
+                <div class="prompt-box">
+                    <p>「請用輕鬆幽默的方式介紹，就像朋友在咖啡廳聊天」</p>
+                </div>
+
+                <h3>👥 設定目標受眾</h3>
+                <div class="prompt-box">
+                    <p>「請用初學者能理解的方式解釋技術概念，避免使用專業術語」</p>
+                </div>
+
+                <h3>📊 強調數據與結論</h3>
+                <div class="prompt-box">
+                    <p>「請特別提出報告中的關鍵數據和研究結論，並解釋其意義」</p>
+                </div>
+
+                <div class="box warning">
+                    <strong>⚠️ 注意事項：</strong>
+                    <ul style="margin-top: 10px; margin-bottom: 0;">
+                        <li>生成時間約 5-10 分鐘，請耐心等待</li>
+                        <li>免費版每日有生成次數限制</li>
+                        <li>目前僅支援英文語音（內容會翻譯自中文來源）</li>
+                    </ul>
+                </div>
+                <span class="page-number">5 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 6: 摘要報告 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>📋 摘要報告</h1>
+                <p>將複雜資料整理成結構化的書面摘要，適合快速掌握重點。</p>
+
+                <div class="two-column" style="margin-top: 20px;">
+                    <div>
+                        <h3>✨ 特色功能</h3>
+                        <ul>
+                            <li><strong>自動提取重點</strong>：AI 識別最重要的資訊</li>
+                            <li><strong>結構化呈現</strong>：標題、段落、條列清晰</li>
+                            <li><strong>來源標註</strong>：每個論點都有出處</li>
+                            <li><strong>生成速度快</strong>：通常 30-60 秒完成</li>
+                        </ul>
+
+                        <h3 style="margin-top: 20px;">🎯 適用場景</h3>
+                        <ul>
+                            <li>會前快速閱讀備忘錄</li>
+                            <li>向主管匯報資料重點</li>
+                            <li>團隊成員同步資訊</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="box example">
+                            <strong>📄 輸出範例結構</strong>
+                            <hr style="margin: 10px 0; border-color: #4caf50;">
+                            <p style="font-size: 15px; margin: 5px 0;"><strong>主題概述</strong></p>
+                            <p style="font-size: 14px; color: #666; margin: 0;">一段精簡的整體摘要...</p>
+                            <p style="font-size: 15px; margin: 15px 0 5px 0;"><strong>關鍵發現</strong></p>
+                            <p style="font-size: 14px; color: #666; margin: 0;">• 重點一 [來源1]<br>• 重點二 [來源2]<br>• 重點三 [來源1]</p>
+                            <p style="font-size: 15px; margin: 15px 0 5px 0;"><strong>結論與建議</strong></p>
+                            <p style="font-size: 14px; color: #666; margin: 0;">根據以上分析...</p>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">6 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 7: 學習指南 & 時間軸 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>📚 學習指南 & 時間軸</h1>
+
+                <div class="two-column">
+                    <div>
+                        <h2>📖 學習指南</h2>
+                        <p>專為學習目的設計的結構化指南</p>
+                        <ul>
+                            <li><strong>章節式組織</strong>：按主題分類</li>
+                            <li><strong>重點摘要</strong>：每章核心概念</li>
+                            <li><strong>延伸思考</strong>：提供思考問題</li>
+                            <li><strong>複習清單</strong>：便於自我檢測</li>
+                        </ul>
+                        <div class="box tip" style="margin-top: 15px;">
+                            <strong>最佳應用：</strong>教師備課、學生複習、培訓教材製作
+                        </div>
+                    </div>
+                    <div>
+                        <h2>⏳ 時間軸</h2>
+                        <p>將資料中的事件按時間順序排列</p>
+                        <ul>
+                            <li><strong>時序清晰</strong>：事件前後關係一目了然</li>
+                            <li><strong>自動識別日期</strong>：從資料中提取時間</li>
+                            <li><strong>事件摘要</strong>：每個時間點的重點</li>
+                            <li><strong>因果關係</strong>：呈現事件間的關聯</li>
+                        </ul>
+                        <div class="box info" style="margin-top: 15px;">
+                            <strong>最佳應用：</strong>歷史研究、專案進度回顧、公司發展史整理
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">7 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 8: 常見問題 & 目錄 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>❓ 常見問題 & 目錄</h1>
+
+                <div class="two-column">
+                    <div>
+                        <h2>❓ 常見問題</h2>
+                        <p>自動從資料中生成問答對</p>
+                        <div class="box example">
+                            <strong>Q: NotebookLM 如何避免幻覺？</strong>
+                            <p style="margin: 10px 0 0 0; font-size: 15px;">A: NotebookLM 只根據使用者上傳的來源資料回答，不會編造來源外的資訊。每個回答都會標註出處，確保可追溯性。[來源1, p.5]</p>
+                        </div>
+                        <h3 style="margin-top: 20px;">🎯 適用場景</h3>
+                        <ul>
+                            <li>產品說明文件</li>
+                            <li>客服知識庫</li>
+                            <li>培訓常見問題</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h2>📑 目錄（目錄大綱）</h2>
+                        <p>為資料生成結構化目錄</p>
+                        <div class="box example">
+                            <strong>目錄大綱範例</strong>
+                            <p style="margin: 10px 0 0 0; font-size: 14px;">
+                                1. 簡介<br>
+                                &nbsp;&nbsp;1.1 背景說明<br>
+                                &nbsp;&nbsp;1.2 研究目的<br>
+                                2. 文獻回顧<br>
+                                &nbsp;&nbsp;2.1 理論基礎<br>
+                                &nbsp;&nbsp;2.2 相關研究<br>
+                                3. 研究方法<br>
+                                ...
+                            </p>
+                        </div>
+                        <h3 style="margin-top: 20px;">🎯 適用場景</h3>
+                        <ul>
+                            <li>長篇報告導覽</li>
+                            <li>書籍結構概覽</li>
+                            <li>課程大綱規劃</li>
+                        </ul>
+                    </div>
+                </div>
+                <span class="page-number">8 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 9: 簡報 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>📊 簡報 - 進階強化功能</h1>
+                <p>NotebookLM 的簡報生成功能持續強化，直接把你的資料變成精美投影片！</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 20px;">
+                    <div class="concept-card">
+                        <h3>📝 智慧內容萃取</h3>
+                        <p>自動識別重點、標題、條列，生成適合投影片的精簡內容</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>🎨 視覺設計建議</h3>
+                        <p>配色方案、排版風格、圖表視覺化建議</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>📤 PDF 輸出</h3>
+                        <p>可直接下載 PDF，也可後續用其他軟體編輯</p>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 25px;">💬 簡報風格控制提示詞</h3>
+                <div class="prompt-box">
+                    <p>「根據這份報告生成 15 張投影片，風格要專業簡潔，目標聽眾是公司高層」</p>
+                </div>
+                <div class="prompt-box">
+                    <p>「每張投影片最多 5 個重點，使用大字體，適合投影到大螢幕」</p>
+                </div>
+                <div class="prompt-box">
+                    <p>「請用視覺化圖表呈現數據，減少文字量，增加視覺吸引力」</p>
+                </div>
+                <span class="page-number">9 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 10: 測驗 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>❓ 測驗 - 自動生成選擇題</h1>
+                <p>根據資料內容自動生成測驗題目，完美用於學習評量和培訓考核！</p>
+
+                <div class="two-column" style="margin-top: 20px;">
+                    <div>
+                        <h3>✨ 功能特色</h3>
+                        <ul>
+                            <li><strong>自動出題</strong>：AI 分析資料生成相關題目</li>
+                            <li><strong>多種題型</strong>：單選、多選、是非題</li>
+                            <li><strong>難度分級</strong>：可指定簡單/中等/困難</li>
+                            <li><strong>解答說明</strong>：每題附帶解釋和出處</li>
+                        </ul>
+
+                        <div class="box example" style="margin-top: 20px;">
+                            <strong>範例題目：</strong><br>
+                            根據文件，NotebookLM 的核心特色是？<br><br>
+                            A. 可連網搜尋最新資訊<br>
+                            B. 只根據上傳資料回答 ✓<br>
+                            C. 可以生成圖片<br>
+                            D. 支援語音輸入<br><br>
+                            <span style="font-size: 13px; color: #666;">解答：B。NotebookLM 是「來源導向」的 AI，只會根據使用者上傳的資料回答。[來源1, p.3]</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>💬 測驗難度指定提示詞</h3>
+                        <div class="prompt-box">
+                            <p>「請根據第 3 章生成 10 題選擇題，難度設定為簡單，適合初學者」</p>
+                        </div>
+                        <div class="prompt-box">
+                            <p>「生成 15 題中等難度的測驗，包含單選和多選題，每題 4 個選項」</p>
+                        </div>
+                        <div class="prompt-box">
+                            <p>「請出 5 題高難度的應用題，需要整合多個章節的概念才能回答」</p>
+                        </div>
+
+                        <div class="box info" style="margin-top: 20px;">
+                            <strong>🎯 適用場景：</strong>
+                            <ul style="margin: 10px 0 0 0;">
+                                <li>教師出考題</li>
+                                <li>學生自我測驗</li>
+                                <li>企業培訓考核</li>
+                                <li>證照考試準備</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">10 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 11: 學習卡 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>🃏 學習卡 - 可匯出 Anki</h1>
+                <p>製作記憶卡片，正面問題、背面答案，幫助長期記憶！</p>
+
+                <div class="two-column" style="margin-top: 20px;">
+                    <div>
+                        <h3>✨ 功能特色</h3>
+                        <ul>
+                            <li><strong>自動生成</strong>：AI 提取關鍵概念製作卡片</li>
+                            <li><strong>雙面設計</strong>：正面問題，背面答案</li>
+                            <li><strong>可匯出格式</strong>：支援匯出到 Anki 等軟體</li>
+                            <li><strong>數量可控</strong>：指定生成張數</li>
+                        </ul>
+
+                        <div class="concept-grid" style="grid-template-columns: 1fr; margin-top: 20px;">
+                            <div class="concept-card" style="border-left: 5px solid #667eea;">
+                                <h3 style="font-size: 16px;">正面</h3>
+                                <p>什麼是「幻覺」(Hallucination)？</p>
+                            </div>
+                            <div class="concept-card" style="border-left: 5px solid #2ecc71;">
+                                <h3 style="font-size: 16px;">背面</h3>
+                                <p>AI 編造看似合理但實際不存在的資訊，這是傳統 AI 的常見問題。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3>💬 閃卡生成提示詞</h3>
+                        <div class="prompt-box">
+                            <p>「生成 30 張閃卡，專注在專有名詞的定義」</p>
+                        </div>
+                        <div class="prompt-box">
+                            <p>「請製作概念比較型閃卡，例如：A vs B 的差異」</p>
+                        </div>
+                        <div class="prompt-box">
+                            <p>「生成適合 Anki 匯入的閃卡格式，包含標籤分類」</p>
+                        </div>
+
+                        <div class="box success" style="margin-top: 20px;">
+                            <strong>🎯 Anki 匯出技巧：</strong><br>
+                            NotebookLM 生成的閃卡可以轉換成 CSV 格式，直接匯入 Anki 進行間隔重複學習！
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">11 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 12: 心智圖 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>🧠 心智圖</h1>
+                <p>把複雜資訊整理成樹狀結構，一目了然看清概念關係！</p>
+
+                <div class="two-column" style="margin-top: 20px;">
+                    <div>
+                        <h3>✨ 功能特色</h3>
+                        <ul>
+                            <li><strong>自動分析結構</strong>：AI 識別主題和子主題</li>
+                            <li><strong>階層式呈現</strong>：中心主題向外延伸</li>
+                            <li><strong>關聯視覺化</strong>：概念間的關係清晰可見</li>
+                            <li><strong>可匯出編輯</strong>：支援常見心智圖格式</li>
+                        </ul>
+
+                        <h3 style="margin-top: 20px;">🎯 適用場景</h3>
+                        <ul>
+                            <li>研究論文結構梳理</li>
+                            <li>課程內容架構規劃</li>
+                            <li>腦力激盪成果整理</li>
+                            <li>複雜專案概念圖</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="box example" style="padding: 30px;">
+                            <div style="text-align: center;">
+                                <div style="background: #667eea; color: white; padding: 15px 25px; border-radius: 30px; display: inline-block; font-weight: bold;">NotebookLM</div>
+                                <div style="margin-top: 20px; display: flex; justify-content: space-around;">
+                                    <div>
+                                        <div style="width: 2px; height: 20px; background: #667eea; margin: 0 auto;"></div>
+                                        <div style="background: #74b9ff; color: white; padding: 8px 15px; border-radius: 20px; font-size: 14px;">來源</div>
+                                    </div>
+                                    <div>
+                                        <div style="width: 2px; height: 20px; background: #667eea; margin: 0 auto;"></div>
+                                        <div style="background: #a29bfe; color: white; padding: 8px 15px; border-radius: 20px; font-size: 14px;">對話</div>
+                                    </div>
+                                    <div>
+                                        <div style="width: 2px; height: 20px; background: #667eea; margin: 0 auto;"></div>
+                                        <div style="background: #fd79a8; color: white; padding: 8px 15px; border-radius: 20px; font-size: 14px;">工件</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="prompt-box" style="margin-top: 20px;">
+                            <p>「為這份研究報告生成心智圖，以研究方法為中心展開各分支」</p>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">12 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 13: 五種神級簡報風格預覽 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>🎨 五種神級簡報風格預覽</h1>
+                <p>NotebookLM 支援多種視覺風格，讓你的簡報脫穎而出！下一單元將詳細教學。</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(5, 1fr); margin-top: 25px;">
+                    <div class="style-card" style="background: linear-gradient(180deg, #2c3e50 0%, #4a69bd 100%);">
+                        <div class="style-icon">🌌</div>
+                        <h4 style="color: white;">抽象背景</h4>
+                        <p style="color: rgba(255,255,255,0.8);">Abstract Background<br>專業商務風</p>
+                    </div>
+                    <div class="style-card" style="background: linear-gradient(180deg, #f8b500 0%, #ff6b6b 100%);">
+                        <div class="style-icon">🎨</div>
+                        <h4 style="color: white;">黏土動畫</h4>
+                        <p style="color: rgba(255,255,255,0.8);">Claymation<br>可愛立體風</p>
+                    </div>
+                    <div class="style-card" style="background: linear-gradient(180deg, #00b894 0%, #55a3ff 100%);">
+                        <div class="style-icon">💥</div>
+                        <h4 style="color: white;">漫畫風格</h4>
+                        <p style="color: rgba(255,255,255,0.8);">Comic<br>活潑吸睛風</p>
+                    </div>
+                    <div class="style-card" style="background: linear-gradient(180deg, #2d3436 0%, #636e72 100%);">
+                        <div class="style-icon">📝</div>
+                        <h4 style="color: white;">黑板風格</h4>
+                        <p style="color: rgba(255,255,255,0.8);">Chalkboard<br>教學手寫風</p>
+                    </div>
+                    <div class="style-card" style="background: linear-gradient(180deg, #6c5ce7 0%, #a29bfe 100%);">
+                        <div class="style-icon">👾</div>
+                        <h4 style="color: white;">像素風格</h4>
+                        <p style="color: rgba(255,255,255,0.8);">Pixel Art<br>復古遊戲風</p>
+                    </div>
+                </div>
+
+                <div class="box info" style="margin-top: 25px;">
+                    <strong>📚 下一單元預告：</strong>單元 4 將深入教學這五種風格的完整提示詞，以及如何根據不同場合選擇最適合的風格！
+                </div>
+                <span class="page-number">13 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 14: 工件類型對照表 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>📋 工件類型完整對照表</h1>
+                <table class="comparison-table">
+                    <tr>
+                        <th style="width: 18%;">工件類型</th>
+                        <th style="width: 15%;">生成時間</th>
+                        <th style="width: 22%;">輸出格式</th>
+                        <th style="width: 45%;">最佳使用情境</th>
+                    </tr>
+                    <tr>
+                        <td><strong>🎙️ 語音摘要</strong></td>
+                        <td>5-10 分鐘</td>
+                        <td>MP3 音檔</td>
+                        <td>通勤學習、運動時聽、分享給不愛閱讀者</td>
+                    </tr>
+                    <tr>
+                        <td><strong>🎬 影片摘要</strong></td>
+                        <td>10-15 分鐘</td>
+                        <td>MP4 影片</td>
+                        <td>社群分享、視覺化展示、教學內容</td>
+                    </tr>
+                    <tr>
+                        <td><strong>📋 摘要報告</strong></td>
+                        <td>30-60 秒</td>
+                        <td>文字文件</td>
+                        <td>快速掌握重點、會前準備、主管匯報</td>
+                    </tr>
+                    <tr>
+                        <td><strong>📖 學習指南</strong></td>
+                        <td>1-2 分鐘</td>
+                        <td>結構化文件</td>
+                        <td>教學備課、學生複習、培訓教材</td>
+                    </tr>
+                    <tr>
+                        <td><strong>⏳ 時間軸</strong></td>
+                        <td>30-60 秒</td>
+                        <td>時序圖文</td>
+                        <td>歷史研究、專案回顧、事件分析</td>
+                    </tr>
+                    <tr>
+                        <td><strong>❓ 常見問題</strong></td>
+                        <td>1-2 分鐘</td>
+                        <td>問答對</td>
+                        <td>產品文件、客服知識庫、培訓 Q&A</td>
+                    </tr>
+                    <tr>
+                        <td><strong>📊 簡報</strong></td>
+                        <td>2-3 分鐘</td>
+                        <td>PDF 簡報</td>
+                        <td>會議報告、教學簡報、提案展示</td>
+                    </tr>
+                    <tr>
+                        <td><strong>📝 測驗</strong></td>
+                        <td>1-2 分鐘</td>
+                        <td>測驗題組</td>
+                        <td>學習評量、培訓考核、自我測驗</td>
+                    </tr>
+                    <tr>
+                        <td><strong>🃏 學習卡</strong></td>
+                        <td>1-2 分鐘</td>
+                        <td>卡片/Anki</td>
+                        <td>記憶學習、專有名詞、考試準備</td>
+                    </tr>
+                    <tr>
+                        <td><strong>🧠 心智圖</strong></td>
+                        <td>1-2 分鐘</td>
+                        <td>視覺圖表</td>
+                        <td>概念整理、架構規劃、腦力激盪</td>
+                    </tr>
+                    <tr>
+                        <td><strong>📈 資訊圖表</strong></td>
+                        <td>2-3 分鐘</td>
+                        <td>PNG 圖片</td>
+                        <td>社群分享、數據視覺化、懶人包</td>
+                    </tr>
+                </table>
+                <span class="page-number">14 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 15: 選擇框架 - 目的導向 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>🎯 工件選擇框架（一）：目的導向</h1>
+                <p>根據你想達成的目標，選擇最適合的工件類型：</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 20px;">
+                    <div class="concept-card" style="border-left: 5px solid #3498db;">
+                        <h3>📊 資訊傳達</h3>
+                        <p style="margin-bottom: 15px;">需要清楚傳達資訊給他人</p>
+                        <div style="background: #e3f2fd; padding: 10px 15px; border-radius: 8px;">
+                            <strong>推薦：</strong>摘要報告、簡報、時間軸
+                        </div>
+                    </div>
+                    <div class="concept-card" style="border-left: 5px solid #e74c3c;">
+                        <h3>📚 學習理解</h3>
+                        <p style="margin-bottom: 15px;">需要深入理解複雜內容</p>
+                        <div style="background: #ffebee; padding: 10px 15px; border-radius: 8px;">
+                            <strong>推薦：</strong>學習指南、心智圖、語音摘要
+                        </div>
+                    </div>
+                    <div class="concept-card" style="border-left: 5px solid #2ecc71;">
+                        <h3>✅ 評量測驗</h3>
+                        <p style="margin-bottom: 15px;">需要檢驗學習成效</p>
+                        <div style="background: #e8f5e9; padding: 10px 15px; border-radius: 8px;">
+                            <strong>推薦：</strong>測驗、學習卡
+                        </div>
+                    </div>
+                    <div class="concept-card" style="border-left: 5px solid #9b59b6;">
+                        <h3>❓ 問題解答</h3>
+                        <p style="margin-bottom: 15px;">需要回答常見問題</p>
+                        <div style="background: #f3e5f5; padding: 10px 15px; border-radius: 8px;">
+                            <strong>推薦：</strong>常見問題、摘要報告
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box tip" style="margin-top: 20px;">
+                    <strong>💡 進階技巧：</strong>同一份資料可以生成多種工件！例如：先用 摘要報告 掌握重點，再用 測驗 測試理解程度。
+                </div>
+                <span class="page-number">15 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 16: 選擇框架 - 受眾導向 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>👥 工件選擇框架（二）：受眾導向</h1>
+                <p>根據你的目標受眾特性，選擇最適合的呈現方式：</p>
+
+                <table class="comparison-table" style="margin-top: 20px;">
+                    <tr>
+                        <th style="width: 20%;">受眾類型</th>
+                        <th style="width: 25%;">特性</th>
+                        <th style="width: 25%;">推薦工件</th>
+                        <th style="width: 30%;">原因</th>
+                    </tr>
+                    <tr>
+                        <td><strong>👔 高階主管</strong></td>
+                        <td>時間有限、重結論</td>
+                        <td>摘要報告、簡報</td>
+                        <td>精簡重點、視覺化呈現</td>
+                    </tr>
+                    <tr>
+                        <td><strong>👨‍💼 專業同事</strong></td>
+                        <td>需要完整資訊</td>
+                        <td>學習指南、時間軸</td>
+                        <td>結構完整、可追溯來源</td>
+                    </tr>
+                    <tr>
+                        <td><strong>🎓 學生</strong></td>
+                        <td>需要學習與測驗</td>
+                        <td>測驗、學習卡、心智圖</td>
+                        <td>幫助記憶、自我檢測</td>
+                    </tr>
+                    <tr>
+                        <td><strong>👥 一般大眾</strong></td>
+                        <td>偏好輕鬆內容</td>
+                        <td>語音摘要、漫畫風簡報</td>
+                        <td>降低閱讀門檻、增加趣味</td>
+                    </tr>
+                    <tr>
+                        <td><strong>🚗 通勤族</strong></td>
+                        <td>無法看螢幕</td>
+                        <td>語音摘要（MP3）</td>
+                        <td>純聽覺內容，不需視覺</td>
+                    </tr>
+                </table>
+
+                <div class="scenario-box" style="margin-top: 20px;">
+                    <h3>💼 情境示範：為不同受眾選擇工件</h3>
+                    <p>同一份市場研究報告，你可能需要：<br>
+                    • 給 CEO：2 頁 摘要報告 + 5 張重點 簡報<br>
+                    • 給行銷團隊：完整 學習指南 + 心智圖<br>
+                    • 給新進員工：培訓 測驗 + 記憶 學習卡</p>
+                </div>
+                <span class="page-number">16 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 17: 選擇框架 - 時間導向 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>⏰ 工件選擇框架（三）：時間導向</h1>
+                <p>根據你可用的時間，選擇最有效率的工件類型：</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 25px;">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%); color: white;">
+                        <h3 style="color: white;">🔥 緊急（5 分鐘內）</h3>
+                        <p style="color: rgba(255,255,255,0.95);">會議馬上要開始，需要快速掌握重點</p>
+                        <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; margin-top: 15px;">
+                            <strong>推薦：</strong>摘要報告<br>
+                            <span style="font-size: 14px;">生成快、重點清晰</span>
+                        </div>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #feca57 0%, #f39c12 100%); color: white;">
+                        <h3 style="color: white;">⚡ 中等（30 分鐘）</h3>
+                        <p style="color: rgba(255,255,255,0.95);">有一些準備時間，需要完整理解</p>
+                        <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; margin-top: 15px;">
+                            <strong>推薦：</strong>學習指南、簡報<br>
+                            <span style="font-size: 14px;">結構完整、可製作簡報</span>
+                        </div>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #26de81 0%, #20bf6b 100%); color: white;">
+                        <h3 style="color: white;">🌿 充裕（1 小時+）</h3>
+                        <p style="color: rgba(255,255,255,0.95);">時間充足，追求深度學習</p>
+                        <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; margin-top: 15px;">
+                            <strong>推薦：</strong>語音摘要 + 測驗<br>
+                            <span style="font-size: 14px;">聽完內容再測驗</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box info" style="margin-top: 25px;">
+                    <strong>💡 時間管理技巧：</strong>可以先生成 摘要報告 快速掌握，再利用零碎時間聽 語音摘要 深入理解。多種工件組合使用，效率最高！
+                </div>
+                <span class="page-number">17 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 18: 情境示範 - 通勤學習 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>🚗 情境示範：通勤時聽研究報告</h1>
+
+                <div class="scenario-box">
+                    <h3>📋 情境描述</h3>
+                    <p>小美是行銷經理，主管要求她在明天的會議上報告競品分析。她有一份 40 頁的研究報告要消化，但今天下班後還有 1.5 小時的通勤時間。</p>
+                </div>
+
+                <h3 style="margin-top: 20px;">🎯 解決方案</h3>
+                <div class="step-box">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>下班前（5 分鐘）</strong><br>
+                        上傳報告到 NotebookLM，生成 語音摘要 → 下載 MP3
+                    </div>
+                </div>
+                <div class="step-box">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>通勤途中（1.5 小時）</strong><br>
+                        在捷運/開車時聽 語音摘要，了解報告重點和脈絡
+                    </div>
+                </div>
+                <div class="step-box">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>回家後（30 分鐘）</strong><br>
+                        生成 簡報 + 摘要報告，快速整理成會議簡報
+                    </div>
+                </div>
+
+                <div class="prompt-box">
+                    <p>「請用對話方式介紹這份競品報告的重點，特別強調競爭者的優勢和我們可以學習的地方」</p>
+                </div>
+
+                <div class="box success">
+                    <strong>✅ 效果：</strong>40 頁報告 → 通勤時間完全掌握，還有餘裕準備簡報！
+                </div>
+                <span class="page-number">18 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 19: 情境示範 - 受眾選擇 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>👥 情境示範：為不同受眾選擇工件</h1>
+
+                <div class="scenario-box">
+                    <h3>📋 情境描述</h3>
+                    <p>阿明是培訓講師，他有一份新員工培訓手冊，需要分別製作給：<br>
+                    (1) HR 主管審核用 (2) 新員工學習用 (3) 培訓後測驗用</p>
+                </div>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 25px;">
+                    <div class="concept-card" style="border-top: 5px solid #3498db;">
+                        <h3>👔 給 HR 主管</h3>
+                        <p><strong>工件：</strong>摘要報告</p>
+                        <p style="font-size: 15px; color: #666; margin-top: 10px;">主管只需要知道培訓涵蓋哪些重點、是否符合公司政策，不需要完整內容。</p>
+                        <div class="prompt-box" style="margin: 15px 0 0 0; padding: 15px;">
+                            <p style="font-size: 14px;">「生成 2 頁摘要，強調培訓目標和涵蓋主題」</p>
+                        </div>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #2ecc71;">
+                        <h3>🎓 給新員工</h3>
+                        <p><strong>工件：</strong>學習指南 + 學習卡</p>
+                        <p style="font-size: 15px; color: #666; margin-top: 10px;">新員工需要完整學習內容，加上記憶卡片幫助記住公司規範和流程。</p>
+                        <div class="prompt-box" style="margin: 15px 0 0 0; padding: 15px;">
+                            <p style="font-size: 14px;">「生成學習指南，並製作 50 張關鍵名詞閃卡」</p>
+                        </div>
+                    </div>
+                    <div class="concept-card" style="border-top: 5px solid #e74c3c;">
+                        <h3>📝 培訓測驗</h3>
+                        <p><strong>工件：</strong>測驗</p>
+                        <p style="font-size: 15px; color: #666; margin-top: 10px;">培訓結束後需要測驗評估學習成效，確保新員工掌握重要知識。</p>
+                        <div class="prompt-box" style="margin: 15px 0 0 0; padding: 15px;">
+                            <p style="font-size: 14px;">「生成 20 題選擇題，難度中等，涵蓋所有章節」</p>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">19 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 20: 工件組合策略 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>🔗 工件組合策略</h1>
+                <p>單一工件很強，組合使用更強大！以下是常見的高效組合：</p>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 20px;">
+                    <div class="concept-card">
+                        <h3>📚 深度學習組合</h3>
+                        <p style="font-size: 15px; color: #1a1a2e; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-top: 10px;">
+                            <strong>語音摘要</strong> → <strong>學習指南</strong> → <strong>測驗</strong>
+                        </p>
+                        <p style="font-size: 14px; color: #666; margin-top: 10px;">先聽 語音摘要 建立整體概念，再讀 學習指南 深入理解，最後用 測驗 測試學習成效。</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>📊 快速報告組合</h3>
+                        <p style="font-size: 15px; color: #1a1a2e; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-top: 10px;">
+                            <strong>摘要報告</strong> → <strong>簡報</strong> → <strong>常見問題</strong>
+                        </p>
+                        <p style="font-size: 14px; color: #666; margin-top: 10px;">先生成摘要掌握重點，製作簡報呈現，最後準備 常見問題 應對提問。</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>🧠 概念整理組合</h3>
+                        <p style="font-size: 15px; color: #1a1a2e; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-top: 10px;">
+                            <strong>心智圖</strong> → <strong>時間軸</strong> → <strong>學習卡</strong>
+                        </p>
+                        <p style="font-size: 14px; color: #666; margin-top: 10px;">先用心智圖看清結構，時間軸理清順序，閃卡記住關鍵概念。</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>🎓 教學備課組合</h3>
+                        <p style="font-size: 15px; color: #1a1a2e; background: #f8f9fa; padding: 12px; border-radius: 8px; margin-top: 10px;">
+                            <strong>學習指南</strong> → <strong>簡報</strong> → <strong>測驗</strong>
+                        </p>
+                        <p style="font-size: 14px; color: #666; margin-top: 10px;">整理教學內容、製作上課簡報、準備課後測驗，一氣呵成！</p>
+                    </div>
+                </div>
+                <span class="page-number">20 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 21: 本單元重點回顧 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>🎯 本單元重點回顧</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <h3 style="color: white;">📦 10+ 種工件類型</h3>
+                        <p style="color: rgba(255,255,255,0.95);">語音摘要、摘要報告、學習指南、時間軸、常見問題、目錄、簡報、測驗、學習卡、心智圖</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        <h3 style="color: white;">🎨 五種神級風格</h3>
+                        <p style="color: rgba(255,255,255,0.95);">抽象背景、黏土動畫、漫畫、黑板、像素風格，讓簡報視覺效果更吸睛</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                        <h3 style="color: white;">🎯 三大選擇框架</h3>
+                        <p style="color: rgba(255,255,255,0.95);">目的導向：傳達/學習/評量<br>受眾導向：主管/同事/學生<br>時間導向：緊急/中等/充裕</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                        <h3 style="color: white;">💬 提示詞控制</h3>
+                        <p style="color: rgba(255,255,255,0.95);">語音摘要 重點指定、簡報風格控制、測驗難度設定，都可透過提示詞精準調整</p>
+                    </div>
+                </div>
+
+                <div class="box success" style="text-align: center; font-size: 20px; margin-top: 25px;">
+                    <strong>核心觀念：選對工件類型 + 精準提示詞 = 最有效的內容傳達！</strong>
+                </div>
+                <span class="page-number">21 / 22</span>
+            </div>
+        </div>
+
+        <!-- Slide 22: 下一單元預告 -->
+        <div class="slide">
+            <div class="content-card cover-card">
+                <h1 style="font-size: 42px;">📚 下一單元預告</h1>
+                <p class="subtitle" style="font-size: 32px; margin-top: 30px;">
+                    <strong>單元 4：五大神級簡報風格提示詞</strong>
+                </p>
+                <p class="subtitle" style="font-size: 18px; margin-top: 25px; line-height: 2;">
+                    深入學習抽象背景、黏土動畫、漫畫、黑板、像素五種風格<br>
+                    掌握每種風格的完整提示詞模板<br>
+                    學會根據場合選擇最適合的視覺風格<br>
+                    實作練習：為同一內容生成不同風格簡報
+                </p>
+                <div class="tags" style="margin-top: 40px;">
+                    <span class="tag">🌌 抽象背景風格</span>
+                    <span class="tag">🎨 黏土動畫風格</span>
+                    <span class="tag">💥 漫畫風格</span>
+                    <span class="tag">📝 黑板風格</span>
+                    <span class="tag">👾 像素風格</span>
+                </div>
+                <div style="margin-top: 50px; display: flex; gap: 20px; justify-content: center;">
+                    <a href="單元目次.html" class="next-unit-btn" style="background: rgba(255,255,255,0.2); color: white; padding: 15px 35px; border-radius: 30px; text-decoration: none; font-size: 18px; font-weight: 600; border: 2px solid rgba(255,255,255,0.4); transition: all 0.3s ease;">📋 回到目次</a>
+                    <a href="單元4-五大神級簡報風格提示詞.html" class="next-unit-btn" style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 35px; border-radius: 30px; text-decoration: none; font-size: 18px; font-weight: 600; border: none; box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">下一單元：五大神級簡報風格提示詞 ➡️</a>
+                </div>
+                <span class="page-number" style="color: #666;">22 / 22</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 導航箭頭 -->
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">❮</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">❯</button>
+
+    <!-- 頁碼指示器 -->
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            updateButtons();
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'Home') goToSlide(0);
+            if (e.key === 'End') goToSlide(totalSlides - 1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            container.innerHTML = '';
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(index);
+                container.appendChild(dot);
+            });
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === index);
+            });
+
+            updateButtons();
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        function goToSlide(index) {
+            showSlide(index);
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,2247 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>單元 18 - 前端架構 Vue 3 與 Pinia 狀態管理</title>
+    <style>
+        /* 基礎設定 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* === 導航列 === */
+        .nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .nav-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .nav-buttons { display: flex; gap: 12px; }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* === 導航箭頭 === */
+        .nav-arrow {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.25);
+            color: white;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 9000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-arrow:hover {
+            background: rgba(255,255,255,0.5);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .prev-arrow { left: 30px; }
+        .next-arrow { right: 30px; }
+        .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* === 投影片容器 === */
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            padding-top: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            position: absolute;
+            top: 60px; left: 0;
+            width: 100%;
+            height: calc(100vh - 60px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            z-index: 20;
+        }
+
+        /* === 內容卡片 === */
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            padding: 45px 55px;
+            max-width: 1400px;
+            width: 95%;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* === 封面特殊樣式 === */
+        .cover-card {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(160deg, #667eea 0%, #764ba2 50%, #5a4f9e 100%);
+            color: white;
+        }
+
+        .cover-card .unit-badge {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 30px;
+            padding: 10px 30px;
+            font-size: 16px;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+
+        .cover-card h1 {
+            font-size: 48px;
+            background: linear-gradient(90deg, #fff 0%, #ffd700 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .cover-card .subtitle {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 700px;
+            line-height: 1.6;
+        }
+
+        .cover-card .tags {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .cover-card .tag {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .instructor-info {
+            margin-top: 40px;
+            padding: 20px 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .instructor-info p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            margin: 5px 0;
+        }
+
+        /* 其他通用樣式 */
+        h1 { color: #667eea; font-size: 38px; margin-bottom: 20px; border-bottom: 4px solid #764ba2; padding-bottom: 12px; }
+        h2 { color: #5a4f9e; font-size: 28px; margin: 25px 0 15px 0; }
+        h3 { color: #667eea; font-size: 22px; margin: 20px 0 12px 0; }
+        p, li { font-size: 18px; line-height: 1.85; color: #444; margin-bottom: 12px; }
+        ul, ol { padding-left: 25px; }
+        li { margin-bottom: 10px; }
+
+        code {
+            background: #f0f2f5;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-family: 'Consolas', monospace;
+            color: #764ba2;
+            font-size: 0.95em;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #667eea 0%, #764ba2 100%);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .box {
+            padding: 20px 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 5px solid;
+            font-size: 17px;
+        }
+        .info { background: #e8f4fd; border-color: #667eea; color: #4a5568; }
+        .warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+        .success { background: #d4edda; border-color: #28a745; color: #155724; }
+        .tip { background: #f3e5f5; border-color: #764ba2; color: #4a148c; }
+        .example { background: #e8f5e9; border-color: #4caf50; color: #1b5e20; }
+
+        /* 功能卡片 - 帶漸層邊框 */
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 15px 0;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 15px;
+            padding: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+        .feature-card h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .feature-card .icon {
+            font-size: 28px;
+        }
+
+        /* 比較表格 */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .comparison-table th, .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .comparison-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 700;
+        }
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+        .comparison-table .check { color: #28a745; font-size: 20px; }
+        .comparison-table .cross { color: #dc3545; font-size: 20px; }
+
+        /* 概念卡片網格 */
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        .concept-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .concept-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+        .concept-card h3 {
+            color: #667eea;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+        }
+        .concept-card p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 0;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        /* 架構圖樣式 */
+        .architecture-diagram {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            color: white;
+        }
+        .architecture-diagram h3 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .arch-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .arch-box {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px 25px;
+            text-align: center;
+            min-width: 180px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .arch-box.frontend {
+            border-color: #4fc3f7;
+            background: rgba(79, 195, 247, 0.15);
+        }
+        .arch-box.backend {
+            border-color: #81c784;
+            background: rgba(129, 199, 132, 0.15);
+        }
+        .arch-box.store {
+            border-color: #ffd54f;
+            background: rgba(255, 213, 79, 0.15);
+        }
+        .arch-box h4 {
+            color: white;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .arch-box ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .arch-box li {
+            color: rgba(255,255,255,0.85);
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .arch-arrow {
+            font-size: 30px;
+            color: #ffd700;
+        }
+
+        /* 程式碼區塊 - Vue風格 */
+        .code-box {
+            background: #1e1e1e;
+            border-radius: 12px;
+            margin: 20px 0;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        .code-box-header {
+            background: linear-gradient(135deg, #42b883 0%, #35495e 100%);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .code-box-header .vue-logo {
+            width: 24px;
+            height: 24px;
+            background: #42b883;
+            border-radius: 4px;
+        }
+        .code-box-header span {
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .code-box pre {
+            padding: 20px;
+            margin: 0;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #d4d4d4;
+        }
+        .code-box .keyword { color: #569cd6; }
+        .code-box .string { color: #ce9178; }
+        .code-box .comment { color: #6a9955; }
+        .code-box .tag { color: #569cd6; }
+        .code-box .attr { color: #9cdcfe; }
+        .code-box .function { color: #dcdcaa; }
+        .code-box .variable { color: #4fc1ff; }
+        .code-box .type { color: #4ec9b0; }
+        .code-box .vue-directive { color: #c586c0; }
+
+        /* 檔案樹狀結構 */
+        .file-tree {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+            border-radius: 15px;
+            padding: 25px 30px;
+            margin: 20px 0;
+            font-family: 'Consolas', monospace;
+        }
+        .file-tree h4 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .file-tree-item {
+            color: #e2e8f0;
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        .file-tree-item.folder {
+            color: #63b3ed;
+        }
+        .file-tree-item.file {
+            color: #a0aec0;
+        }
+        .file-tree-item .icon {
+            width: 18px;
+            text-align: center;
+        }
+        .file-tree-item.indent-1 { padding-left: 20px; }
+        .file-tree-item.indent-2 { padding-left: 40px; }
+        .file-tree-item.indent-3 { padding-left: 60px; }
+        .file-tree-item .description {
+            color: #718096;
+            font-size: 12px;
+            margin-left: auto;
+        }
+
+        /* 流程圖 */
+        .flow-diagram {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            color: white;
+        }
+        .flow-diagram h3 {
+            color: white;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .flow-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .flow-step {
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 15px 20px;
+            text-align: center;
+            min-width: 100px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .flow-step .step-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .flow-step p {
+            color: white;
+            font-size: 13px;
+            margin: 0;
+        }
+        .flow-arrow {
+            color: #ffd700;
+            font-size: 24px;
+        }
+
+        /* TypeScript 介面卡片 */
+        .interface-card {
+            background: linear-gradient(135deg, #3178c6 0%, #235a97 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 15px 0;
+            color: white;
+        }
+        .interface-card h4 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .interface-card pre {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0;
+            overflow-x: auto;
+        }
+        .interface-card .ts-keyword { color: #569cd6; }
+        .interface-card .ts-type { color: #4ec9b0; }
+        .interface-card .ts-property { color: #9cdcfe; }
+        .interface-card .ts-string { color: #ce9178; }
+
+        /* 響應式系統圖 */
+        .reactive-diagram {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+        .reactive-diagram h3 {
+            color: #42b883;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .reactive-flow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .reactive-box {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            min-width: 140px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .reactive-box.data {
+            border-color: #42b883;
+        }
+        .reactive-box.watcher {
+            border-color: #ffd54f;
+        }
+        .reactive-box.component {
+            border-color: #4fc3f7;
+        }
+        .reactive-box h5 {
+            color: white;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        .reactive-box p {
+            color: rgba(255,255,255,0.7);
+            font-size: 13px;
+            margin: 0;
+        }
+        .reactive-arrow {
+            color: #42b883;
+            font-size: 28px;
+        }
+
+        /* Store 概念圖 */
+        .store-diagram {
+            background: linear-gradient(135deg, #42b883 0%, #35495e 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+        .store-diagram h3 {
+            color: white;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .store-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .store-section {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 200px;
+            text-align: center;
+        }
+        .store-section h4 {
+            color: #ffd700;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+        .store-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .store-section li {
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
+            padding: 5px 0;
+        }
+
+        /* SFC 視覺化 */
+        .sfc-visual {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .sfc-visual h3 {
+            color: #42b883;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .sfc-sections {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .sfc-section {
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .sfc-section.template {
+            background: linear-gradient(135deg, rgba(66, 184, 131, 0.3) 0%, rgba(66, 184, 131, 0.1) 100%);
+            border-left: 4px solid #42b883;
+        }
+        .sfc-section.script {
+            background: linear-gradient(135deg, rgba(255, 213, 79, 0.3) 0%, rgba(255, 213, 79, 0.1) 100%);
+            border-left: 4px solid #ffd54f;
+        }
+        .sfc-section.style {
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.3) 0%, rgba(79, 195, 247, 0.1) 100%);
+            border-left: 4px solid #4fc3f7;
+        }
+        .sfc-section .tag-name {
+            font-family: 'Consolas', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            min-width: 100px;
+        }
+        .sfc-section.template .tag-name { color: #42b883; }
+        .sfc-section.script .tag-name { color: #ffd54f; }
+        .sfc-section.style .tag-name { color: #4fc3f7; }
+        .sfc-section .description {
+            color: rgba(255,255,255,0.85);
+            font-size: 15px;
+        }
+
+        /* 頁碼指示器 */
+        .indicators {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 4000;
+            padding: 12px 25px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 30px;
+            backdrop-filter: blur(8px);
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dot:hover { background: rgba(255,255,255,0.7); }
+        .dot.active {
+            background: #ffd700;
+            transform: scale(1.3);
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 15px;
+            right: 25px;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* 滾動條美化 */
+        .content-card::-webkit-scrollbar { width: 8px; }
+        .content-card::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .content-card::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        /* 小技巧提示框 */
+        .tip-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 2px dashed #764ba2;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .tip-box h4 {
+            color: #764ba2;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 下一單元按鈕 */
+        .next-unit-btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        }
+        .next-unit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.4);
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.3); }
+
+        /* 步驟區塊 */
+        .step-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 18px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        .step-box:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* 客製化選項卡片 */
+        .custom-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 10px 0;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+        .custom-card:hover {
+            transform: translateX(5px);
+        }
+        .custom-card.style { border-color: #e91e63; }
+        .custom-card.text { border-color: #2196f3; }
+        .custom-card.feature { border-color: #4caf50; }
+        .custom-card.page { border-color: #ff9800; }
+        .custom-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+        }
+        .custom-card.style h4 { color: #e91e63; }
+        .custom-card.text h4 { color: #2196f3; }
+        .custom-card.feature h4 { color: #4caf50; }
+        .custom-card.page h4 { color: #ff9800; }
+        .custom-card p {
+            margin: 0;
+            font-size: 15px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 導航列 -->
+    <div class="nav-bar">
+        <div class="nav-title">單元 18 - 前端架構 Vue 3 與 Pinia 狀態管理</div>
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="goToSlide(0)">首頁</button>
+            <button class="nav-btn" onclick="toggleFullscreen()">全螢幕</button>
+            <a href="單元目次.html" class="nav-btn">目次</a>
+            <a href="https://www.facebook.com/groups/2754139931432955" target="_blank" class="nav-btn">FB</a>
+            <a href="https://www.youtube.com/@Liang-yt02" target="_blank" class="nav-btn">YT</a>
+        </div>
+    </div>
+
+    <!-- 投影片內容 -->
+    <div class="slide-container">
+
+        <!-- Slide 1: 封面 -->
+        <div class="slide active">
+            <div class="content-card cover-card">
+                <div class="unit-badge">第四部分：自動化系統篇</div>
+                <h1>前端架構<br>Vue 3 與 Pinia 狀態管理</h1>
+                <p class="subtitle">深入了解簡報編修系統的前端技術架構<br>從框架選擇到狀態管理的完整解析</p>
+                <div class="tags">
+                    <span class="tag">Vue 3</span>
+                    <span class="tag">Composition API</span>
+                    <span class="tag">Pinia</span>
+                    <span class="tag">TypeScript</span>
+                    <span class="tag">響應式系統</span>
+                </div>
+                <div style="margin-top: 25px;">
+                    <a href="https://github.com/ChatGPT3a01/NotebookLM-Slide-Edit-Tutorial" target="_blank" style="display: inline-block; background: linear-gradient(90deg, #42b883 0%, #35495e 100%); color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(66, 184, 131, 0.4);">🔗 GitHub 專案下載（含前端原始碼）</a>
+                </div>
+                <div class="instructor-info">
+                    <p>講師：曾慶良（阿亮老師）</p>
+                    <p>NotebookLM AI 全能智慧王</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 什麼是前端 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>什麼是前端？</h1>
+                <p style="font-size: 20px; margin-bottom: 25px;">在深入技術細節之前，讓我們先理解前端的角色</p>
+
+                <div class="two-column">
+                    <div class="feature-card">
+                        <h3>前端 (Frontend)</h3>
+                        <p>使用者直接看到和操作的部分</p>
+                        <ul style="margin-top: 15px; font-size: 16px;">
+                            <li>使用者介面 (UI)</li>
+                            <li>按鈕、表單、選單</li>
+                            <li>動畫和視覺效果</li>
+                            <li>在瀏覽器中執行</li>
+                            <li>技術：HTML、CSS、JavaScript</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h3>後端 (Backend)</h3>
+                        <p>在伺服器上執行的部分</p>
+                        <ul style="margin-top: 15px; font-size: 16px;">
+                            <li>商業邏輯處理</li>
+                            <li>資料庫操作</li>
+                            <li>API 服務</li>
+                            <li>使用者看不到</li>
+                            <li>技術：Python、Node.js、Java 等</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box info" style="margin-top: 20px;">
+                    <strong>簡單比喻：</strong>前端像是餐廳的用餐區（客人看得到），後端像是廚房（客人看不到但很重要）。
+                </div>
+                <span class="page-number">2 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 3: 前後端分離架構 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>前後端分離架構</h1>
+
+                <div class="architecture-diagram">
+                    <h3>簡報編修系統的架構</h3>
+                    <div class="arch-container">
+                        <div class="arch-box frontend">
+                            <h4>前端 (Vue 3)</h4>
+                            <ul>
+                                <li>使用者介面</li>
+                                <li>檔案上傳預覽</li>
+                                <li>進度顯示</li>
+                                <li>PPTX 生成</li>
+                            </ul>
+                            <p style="color: #4fc3f7; font-size: 12px; margin-top: 10px;">Port: 5173</p>
+                        </div>
+                        <span class="arch-arrow">HTTP API</span>
+                        <div class="arch-box backend">
+                            <h4>後端 (Flask)</h4>
+                            <ul>
+                                <li>接收檔案</li>
+                                <li>呼叫 AI</li>
+                                <li>處理結果</li>
+                                <li>回傳資料</li>
+                            </ul>
+                            <p style="color: #81c784; font-size: 12px; margin-top: 10px;">Port: 8099</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="concept-card">
+                        <h3>獨立開發</h3>
+                        <p>前端和後端可以由不同團隊同時開發，提高效率</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>技術自由</h3>
+                        <p>前端用 Vue，後端用 Python，各自選擇最適合的技術</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>易於維護</h3>
+                        <p>問題發生時容易定位，修改一方不影響另一方</p>
+                    </div>
+                </div>
+                <span class="page-number">3 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 4: 為什麼選擇 Vue 3 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>為什麼選擇 Vue 3？</h1>
+
+                <div class="feature-card">
+                    <h3>Vue.js 是什麼？</h3>
+                    <p>Vue 是一個用於建構使用者介面的 JavaScript 框架。由尤雨溪（Evan You）創建，以<strong>易學易用</strong>和<strong>靈活性</strong>著稱。</p>
+                </div>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #42b883 0%, #35495e 100%); color: white;">
+                        <h3 style="color: white;">學習曲線平緩</h3>
+                        <p style="color: rgba(255,255,255,0.95);">相比 React 和 Angular，Vue 的語法更直觀，初學者更容易上手。HTML 模板語法讓傳統網頁開發者感到熟悉。</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <h3 style="color: white;">完整的生態系統</h3>
+                        <p style="color: rgba(255,255,255,0.95);">官方提供路由（Vue Router）、狀態管理（Pinia）、開發工具（Vite）等完整解決方案。</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%); color: #333;">
+                        <h3 style="color: #333;">優秀的效能</h3>
+                        <p>Vue 3 採用 Proxy 實現響應式系統，效能比 Vue 2 提升 2 倍以上，打包體積也更小。</p>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%); color: white;">
+                        <h3 style="color: white;">TypeScript 支援</h3>
+                        <p style="color: rgba(255,255,255,0.95);">Vue 3 從底層完全重寫，原生支援 TypeScript，提供更好的型別檢查和開發體驗。</p>
+                    </div>
+                </div>
+                <span class="page-number">4 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 5: Vue 3 新特性 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>Vue 3 的重要新特性</h1>
+
+                <div class="two-column">
+                    <div>
+                        <h2>Composition API</h2>
+                        <p>Vue 3 最重要的新功能</p>
+
+                        <div class="code-box">
+                            <div class="code-box-header">
+                                <div class="vue-logo"></div>
+                                <span>Composition API 範例</span>
+                            </div>
+                            <pre><span class="keyword">import</span> { <span class="variable">ref</span>, <span class="variable">computed</span> } <span class="keyword">from</span> <span class="string">'vue'</span>
+
+<span class="keyword">const</span> <span class="variable">count</span> = <span class="function">ref</span>(<span class="string">0</span>)
+<span class="keyword">const</span> <span class="variable">doubled</span> = <span class="function">computed</span>(() =>
+  <span class="variable">count</span>.value * 2
+)
+
+<span class="keyword">function</span> <span class="function">increment</span>() {
+  <span class="variable">count</span>.value++
+}</pre>
+                        </div>
+                    </div>
+                    <div>
+                        <h2>優點</h2>
+                        <div class="concept-card">
+                            <h3>更好的程式碼組織</h3>
+                            <p>相關邏輯可以放在一起，而不是分散在 data、methods、computed 等選項中</p>
+                        </div>
+                        <div class="concept-card">
+                            <h3>更好的邏輯複用</h3>
+                            <p>可以輕鬆提取和複用邏輯，建立自訂的 Composable 函式</p>
+                        </div>
+                        <div class="concept-card">
+                            <h3>更好的型別推導</h3>
+                            <p>搭配 TypeScript 使用時，能獲得完整的型別檢查支援</p>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">5 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 6: 專案結構概覽 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>專案結構概覽</h1>
+                <p style="font-size: 18px; margin-bottom: 20px;">了解前端專案的檔案組織方式</p>
+
+                <div class="two-column">
+                    <div class="file-tree">
+                        <h4>frontend/ 目錄結構</h4>
+                        <div class="file-tree-item folder">
+                            <span class="icon">+</span> src/
+                            <span class="description">主要程式碼</span>
+                        </div>
+                        <div class="file-tree-item folder indent-1">
+                            <span class="icon">+</span> views/
+                            <span class="description">頁面元件</span>
+                        </div>
+                        <div class="file-tree-item folder indent-1">
+                            <span class="icon">+</span> components/
+                            <span class="description">通用元件</span>
+                        </div>
+                        <div class="file-tree-item folder indent-1">
+                            <span class="icon">+</span> stores/
+                            <span class="description">Pinia 狀態</span>
+                        </div>
+                        <div class="file-tree-item folder indent-1">
+                            <span class="icon">+</span> router/
+                            <span class="description">路由設定</span>
+                        </div>
+                        <div class="file-tree-item file indent-1">
+                            <span class="icon">-</span> App.vue
+                            <span class="description">根元件</span>
+                        </div>
+                        <div class="file-tree-item file indent-1">
+                            <span class="icon">-</span> main.ts
+                            <span class="description">入口檔案</span>
+                        </div>
+                        <div class="file-tree-item file">
+                            <span class="icon">-</span> index.html
+                            <span class="description">HTML 模板</span>
+                        </div>
+                        <div class="file-tree-item file">
+                            <span class="icon">-</span> vite.config.ts
+                            <span class="description">Vite 設定</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="box info">
+                            <strong>views/</strong><br>
+                            存放「頁面級」元件，對應到不同的路由，例如首頁、設定頁。
+                        </div>
+                        <div class="box success">
+                            <strong>components/</strong><br>
+                            存放可重複使用的「通用」元件，例如按鈕、卡片、對話框。
+                        </div>
+                        <div class="box warning">
+                            <strong>stores/</strong><br>
+                            Pinia 狀態管理檔案，管理整個應用程式的共享狀態。
+                        </div>
+                        <div class="box tip">
+                            <strong>router/</strong><br>
+                            Vue Router 設定，定義 URL 路徑與頁面元件的對應關係。
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">6 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 7: 單檔案元件(SFC) -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>單檔案元件 (SFC)</h1>
+                <p style="font-size: 18px; margin-bottom: 20px;">Vue 獨特的 .vue 檔案格式，將模板、邏輯、樣式整合在一起</p>
+
+                <div class="sfc-visual">
+                    <h3>單檔案元件的三個區塊</h3>
+                    <div class="sfc-sections">
+                        <div class="sfc-section template">
+                            <span class="tag-name">&lt;template&gt;</span>
+                            <span class="description">定義元件的 HTML 結構，使用 Vue 的模板語法來綁定資料和事件</span>
+                        </div>
+                        <div class="sfc-section script">
+                            <span class="tag-name">&lt;script&gt;</span>
+                            <span class="description">定義元件的邏輯，包括資料、計算屬性、方法和生命週期</span>
+                        </div>
+                        <div class="sfc-section style">
+                            <span class="tag-name">&lt;style&gt;</span>
+                            <span class="description">定義元件的 CSS 樣式，可使用 scoped 限制樣式只作用於本元件</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box success">
+                    <strong>SFC 的優點：</strong>所有相關程式碼都在同一個檔案中，便於閱讀和維護。每個元件都是獨立的單元，可以輕鬆複用。
+                </div>
+                <span class="page-number">7 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 8: SFC 程式碼範例 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>SFC 程式碼範例</h1>
+
+                <div class="code-box">
+                    <div class="code-box-header">
+                        <div class="vue-logo"></div>
+                        <span>PageCard.vue - 頁面卡片元件</span>
+                    </div>
+                    <pre><span class="tag">&lt;template&gt;</span>
+  <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="string">"page-card"</span> <span class="vue-directive">@click</span>=<span class="string">"toggleSelect"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;img</span> <span class="vue-directive">:src</span>=<span class="string">"page.thumbnail"</span> <span class="attr">alt</span>=<span class="string">"頁面預覽"</span> <span class="tag">/&gt;</span>
+    <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="string">"page-number"</span><span class="tag">&gt;</span>{{ page.pageNumber }}<span class="tag">&lt;/div&gt;</span>
+    <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="string">"checkbox"</span> <span class="vue-directive">v-model</span>=<span class="string">"page.selected"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;/template&gt;</span>
+
+<span class="tag">&lt;script</span> <span class="attr">setup</span> <span class="attr">lang</span>=<span class="string">"ts"</span><span class="tag">&gt;</span>
+<span class="keyword">import</span> { <span class="variable">defineProps</span> } <span class="keyword">from</span> <span class="string">'vue'</span>
+
+<span class="keyword">const</span> <span class="variable">props</span> = <span class="function">defineProps</span>&lt;{
+  page: <span class="type">PageItem</span>
+}&gt;()
+
+<span class="keyword">function</span> <span class="function">toggleSelect</span>() {
+  <span class="variable">props</span>.page.selected = !<span class="variable">props</span>.page.selected
+}
+<span class="tag">&lt;/script&gt;</span>
+
+<span class="tag">&lt;style</span> <span class="attr">scoped</span><span class="tag">&gt;</span>
+<span class="attr">.page-card</span> { <span class="keyword">cursor</span>: pointer; }
+<span class="tag">&lt;/style&gt;</span></pre>
+                </div>
+                <span class="page-number">8 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 9: 什麼是 Pinia -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>什麼是 Pinia？</h1>
+                <p style="font-size: 20px; margin-bottom: 25px;">Vue 3 官方推薦的狀態管理解決方案</p>
+
+                <div class="feature-card">
+                    <h3>為什麼需要狀態管理？</h3>
+                    <p>當應用程式越來越複雜，多個元件需要共享資料時，直接傳遞 props 會變得很麻煩。狀態管理提供一個<strong>集中管理</strong>所有共享狀態的地方。</p>
+                </div>
+
+                <div class="store-diagram">
+                    <h3>Pinia Store 的核心概念</h3>
+                    <div class="store-container">
+                        <div class="store-section">
+                            <h4>State</h4>
+                            <ul>
+                                <li>儲存資料的地方</li>
+                                <li>類似元件的 data</li>
+                                <li>響應式資料</li>
+                            </ul>
+                        </div>
+                        <div class="store-section">
+                            <h4>Getters</h4>
+                            <ul>
+                                <li>計算後的資料</li>
+                                <li>類似 computed</li>
+                                <li>有快取機制</li>
+                            </ul>
+                        </div>
+                        <div class="store-section">
+                            <h4>Actions</h4>
+                            <ul>
+                                <li>修改狀態的方法</li>
+                                <li>類似 methods</li>
+                                <li>可以是非同步</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box tip">
+                    <strong>Pinia vs Vuex：</strong>Pinia 是 Vuex 5 的實現，語法更簡潔，完全支援 TypeScript，是 Vue 3 的首選。
+                </div>
+                <span class="page-number">9 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 10: Store 概念圖 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>Store 的運作方式</h1>
+
+                <div class="architecture-diagram">
+                    <h3>元件與 Store 的關係</h3>
+                    <div class="arch-container">
+                        <div class="arch-box frontend">
+                            <h4>元件 A</h4>
+                            <ul>
+                                <li>讀取頁面列表</li>
+                                <li>呼叫處理動作</li>
+                            </ul>
+                        </div>
+                        <div class="arch-box store">
+                            <h4>Pinia Store</h4>
+                            <ul>
+                                <li>pages: 頁面資料</li>
+                                <li>loading: 載入狀態</li>
+                                <li>processPages()</li>
+                            </ul>
+                        </div>
+                        <div class="arch-box frontend">
+                            <h4>元件 B</h4>
+                            <ul>
+                                <li>讀取載入狀態</li>
+                                <li>顯示進度條</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="two-column" style="margin-top: 25px;">
+                    <div class="box success" style="margin: 0;">
+                        <strong>集中管理的好處：</strong>
+                        <ul style="margin-top: 10px; margin-bottom: 0;">
+                            <li>資料來源單一，避免不一致</li>
+                            <li>任何元件都可以存取</li>
+                            <li>狀態變化可追蹤</li>
+                        </ul>
+                    </div>
+                    <div class="box info" style="margin: 0;">
+                        <strong>適合放在 Store 的資料：</strong>
+                        <ul style="margin-top: 10px; margin-bottom: 0;">
+                            <li>多元件共享的資料</li>
+                            <li>需要持久化的狀態</li>
+                            <li>全域設定和使用者資訊</li>
+                        </ul>
+                    </div>
+                </div>
+                <span class="page-number">10 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 11: Pinia Store 範例 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>Pinia Store 程式碼範例</h1>
+
+                <div class="code-box">
+                    <div class="code-box-header">
+                        <div class="vue-logo"></div>
+                        <span>stores/slideStore.ts - 投影片狀態管理</span>
+                    </div>
+                    <pre><span class="keyword">import</span> { <span class="variable">defineStore</span> } <span class="keyword">from</span> <span class="string">'pinia'</span>
+<span class="keyword">import</span> { <span class="variable">ref</span>, <span class="variable">computed</span> } <span class="keyword">from</span> <span class="string">'vue'</span>
+
+<span class="keyword">export const</span> <span class="variable">useSlideStore</span> = <span class="function">defineStore</span>(<span class="string">'slide'</span>, () => {
+  <span class="comment">// State - 儲存資料</span>
+  <span class="keyword">const</span> <span class="variable">pages</span> = <span class="function">ref</span>&lt;<span class="type">PageItem</span>[]&gt;([])
+  <span class="keyword">const</span> <span class="variable">isProcessing</span> = <span class="function">ref</span>(<span class="keyword">false</span>)
+
+  <span class="comment">// Getters - 計算屬性</span>
+  <span class="keyword">const</span> <span class="variable">selectedPages</span> = <span class="function">computed</span>(() =>
+    <span class="variable">pages</span>.value.<span class="function">filter</span>(p => p.selected)
+  )
+
+  <span class="comment">// Actions - 方法</span>
+  <span class="keyword">async function</span> <span class="function">processSelectedPages</span>() {
+    <span class="variable">isProcessing</span>.value = <span class="keyword">true</span>
+    <span class="comment">// ... 處理邏輯</span>
+    <span class="variable">isProcessing</span>.value = <span class="keyword">false</span>
+  }
+
+  <span class="keyword">return</span> { <span class="variable">pages</span>, <span class="variable">isProcessing</span>, <span class="variable">selectedPages</span>, <span class="variable">processSelectedPages</span> }
+})</pre>
+                </div>
+                <span class="page-number">11 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 12: 在元件中使用 Store -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>在元件中使用 Store</h1>
+
+                <div class="code-box">
+                    <div class="code-box-header">
+                        <div class="vue-logo"></div>
+                        <span>views/HomePage.vue - 使用 Store</span>
+                    </div>
+                    <pre><span class="tag">&lt;template&gt;</span>
+  <span class="tag">&lt;div&gt;</span>
+    <span class="comment">&lt;!-- 顯示頁面列表 --&gt;</span>
+    <span class="tag">&lt;PageCard</span>
+      <span class="vue-directive">v-for</span>=<span class="string">"page in store.pages"</span>
+      <span class="vue-directive">:key</span>=<span class="string">"page.id"</span>
+      <span class="vue-directive">:page</span>=<span class="string">"page"</span>
+    <span class="tag">/&gt;</span>
+
+    <span class="comment">&lt;!-- 顯示已選數量 --&gt;</span>
+    <span class="tag">&lt;p&gt;</span>已選擇 {{ store.selectedPages.length }} 頁<span class="tag">&lt;/p&gt;</span>
+
+    <span class="comment">&lt;!-- 處理按鈕 --&gt;</span>
+    <span class="tag">&lt;button</span> <span class="vue-directive">@click</span>=<span class="string">"store.processSelectedPages"</span>
+            <span class="vue-directive">:disabled</span>=<span class="string">"store.isProcessing"</span><span class="tag">&gt;</span>
+      {{ store.isProcessing ? '處理中...' : '開始處理' }}
+    <span class="tag">&lt;/button&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;/template&gt;</span>
+
+<span class="tag">&lt;script</span> <span class="attr">setup</span><span class="tag">&gt;</span>
+<span class="keyword">import</span> { <span class="variable">useSlideStore</span> } <span class="keyword">from</span> <span class="string">'@/stores/slideStore'</span>
+<span class="keyword">const</span> <span class="variable">store</span> = <span class="function">useSlideStore</span>()
+<span class="tag">&lt;/script&gt;</span></pre>
+                </div>
+                <span class="page-number">12 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 13: 資料介面 Interface -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>資料介面 (Interface)</h1>
+                <p style="font-size: 18px; margin-bottom: 20px;">TypeScript 介面定義資料的結構，讓程式碼更安全、更易維護</p>
+
+                <div class="two-column">
+                    <div class="interface-card">
+                        <h4>PageItem 介面</h4>
+                        <pre><span class="ts-keyword">interface</span> <span class="ts-type">PageItem</span> {
+  <span class="ts-property">id</span>: <span class="ts-type">string</span>
+  <span class="ts-property">pageNumber</span>: <span class="ts-type">number</span>
+  <span class="ts-property">thumbnail</span>: <span class="ts-type">string</span>
+  <span class="ts-property">originalImage</span>: <span class="ts-type">string</span>
+  <span class="ts-property">selected</span>: <span class="ts-type">boolean</span>
+  <span class="ts-property">processed</span>: <span class="ts-type">boolean</span>
+  <span class="ts-property">result</span>?: <span class="ts-type">ProcessResult</span>
+}</pre>
+                    </div>
+                    <div class="interface-card">
+                        <h4>TextBlock 介面</h4>
+                        <pre><span class="ts-keyword">interface</span> <span class="ts-type">TextBlock</span> {
+  <span class="ts-property">text</span>: <span class="ts-type">string</span>
+  <span class="ts-property">x</span>: <span class="ts-type">number</span>
+  <span class="ts-property">y</span>: <span class="ts-type">number</span>
+  <span class="ts-property">width</span>: <span class="ts-type">number</span>
+  <span class="ts-property">height</span>: <span class="ts-type">number</span>
+  <span class="ts-property">fontSize</span>: <span class="ts-type">number</span>
+  <span class="ts-property">fontColor</span>: <span class="ts-type">string</span>
+}</pre>
+                    </div>
+                </div>
+
+                <div class="interface-card" style="margin-top: 15px;">
+                    <h4>ProcessResult 介面</h4>
+                    <pre><span class="ts-keyword">interface</span> <span class="ts-type">ProcessResult</span> {
+  <span class="ts-property">cleanedImage</span>: <span class="ts-type">string</span>    <span class="comment">// 去字後的背景圖 (Base64)</span>
+  <span class="ts-property">textBlocks</span>: <span class="ts-type">TextBlock</span>[]  <span class="comment">// OCR 識別出的文字區塊</span>
+  <span class="ts-property">processTime</span>: <span class="ts-type">number</span>     <span class="comment">// 處理時間 (毫秒)</span>
+}</pre>
+                </div>
+                <span class="page-number">13 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 14: 應用程式流程 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>應用程式流程</h1>
+
+                <div class="flow-diagram">
+                    <h3>從啟動到匯出的完整流程</h3>
+                    <div class="flow-container">
+                        <div class="flow-step">
+                            <div class="step-icon">1</div>
+                            <p>啟動</p>
+                        </div>
+                        <span class="flow-arrow">-></span>
+                        <div class="flow-step">
+                            <div class="step-icon">2</div>
+                            <p>上傳</p>
+                        </div>
+                        <span class="flow-arrow">-></span>
+                        <div class="flow-step">
+                            <div class="step-icon">3</div>
+                            <p>選擇</p>
+                        </div>
+                        <span class="flow-arrow">-></span>
+                        <div class="flow-step">
+                            <div class="step-icon">4</div>
+                            <p>處理</p>
+                        </div>
+                        <span class="flow-arrow">-></span>
+                        <div class="flow-step">
+                            <div class="step-icon">5</div>
+                            <p>結果</p>
+                        </div>
+                        <span class="flow-arrow">-></span>
+                        <div class="flow-step">
+                            <div class="step-icon">6</div>
+                            <p>編輯</p>
+                        </div>
+                        <span class="flow-arrow">-></span>
+                        <div class="flow-step">
+                            <div class="step-icon">7</div>
+                            <p>匯出</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(4, 1fr); margin-top: 25px;">
+                    <div class="concept-card" style="padding: 15px;">
+                        <h3 style="font-size: 16px;">1-2. 啟動與上傳</h3>
+                        <p style="font-size: 14px;">初始化 Store<br>解析 PDF 檔案</p>
+                    </div>
+                    <div class="concept-card" style="padding: 15px;">
+                        <h3 style="font-size: 16px;">3-4. 選擇與處理</h3>
+                        <p style="font-size: 14px;">勾選頁面<br>呼叫後端 API</p>
+                    </div>
+                    <div class="concept-card" style="padding: 15px;">
+                        <h3 style="font-size: 16px;">5-6. 結果與編輯</h3>
+                        <p style="font-size: 14px;">更新 Store 狀態<br>顯示處理結果</p>
+                    </div>
+                    <div class="concept-card" style="padding: 15px;">
+                        <h3 style="font-size: 16px;">7. 匯出</h3>
+                        <p style="font-size: 14px;">組合圖層<br>生成 PPTX</p>
+                    </div>
+                </div>
+                <span class="page-number">14 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 15: 流程詳解 - 啟動階段 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>流程詳解：啟動階段</h1>
+
+                <div class="step-box">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>載入 main.ts</strong><br>
+                        瀏覽器載入 index.html，執行 main.ts 初始化 Vue 應用程式
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>建立 Pinia Store</strong><br>
+                        呼叫 createPinia() 建立狀態管理實例，註冊到 Vue 應用程式
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>設定 Vue Router</strong><br>
+                        載入路由設定，定義各頁面的 URL 對應
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">4</span>
+                    <div>
+                        <strong>掛載根元件</strong><br>
+                        將 App.vue 掛載到 DOM，開始渲染使用者介面
+                    </div>
+                </div>
+
+                <div class="code-box" style="margin-top: 20px;">
+                    <div class="code-box-header">
+                        <div class="vue-logo"></div>
+                        <span>main.ts - 應用程式入口</span>
+                    </div>
+                    <pre><span class="keyword">import</span> { <span class="variable">createApp</span> } <span class="keyword">from</span> <span class="string">'vue'</span>
+<span class="keyword">import</span> { <span class="variable">createPinia</span> } <span class="keyword">from</span> <span class="string">'pinia'</span>
+<span class="keyword">import</span> <span class="variable">App</span> <span class="keyword">from</span> <span class="string">'./App.vue'</span>
+<span class="keyword">import</span> <span class="variable">router</span> <span class="keyword">from</span> <span class="string">'./router'</span>
+
+<span class="function">createApp</span>(<span class="variable">App</span>)
+  .<span class="function">use</span>(<span class="function">createPinia</span>())
+  .<span class="function">use</span>(<span class="variable">router</span>)
+  .<span class="function">mount</span>(<span class="string">'#app'</span>)</pre>
+                </div>
+                <span class="page-number">15 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 16: 流程詳解 - 上傳與處理 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>流程詳解：上傳與處理</h1>
+
+                <div class="two-column">
+                    <div>
+                        <h2>上傳階段</h2>
+                        <div class="step-box">
+                            <span class="step-number">1</span>
+                            <div>
+                                <strong>拖放或選擇檔案</strong><br>
+                                使用 HTML5 File API 取得檔案
+                            </div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">2</span>
+                            <div>
+                                <strong>解析 PDF</strong><br>
+                                使用 pdfjs-dist 將 PDF 轉為圖片
+                            </div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">3</span>
+                            <div>
+                                <strong>更新 Store</strong><br>
+                                將頁面資料存入 Pinia Store
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h2>處理階段</h2>
+                        <div class="step-box">
+                            <span class="step-number">4</span>
+                            <div>
+                                <strong>發送 API 請求</strong><br>
+                                將圖片傳送到後端處理
+                            </div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">5</span>
+                            <div>
+                                <strong>接收結果</strong><br>
+                                後端回傳去字圖片和文字資料
+                            </div>
+                        </div>
+                        <div class="step-box">
+                            <span class="step-number">6</span>
+                            <div>
+                                <strong>更新狀態</strong><br>
+                                將結果存入對應頁面的 result
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box info" style="margin-top: 15px;">
+                    <strong>即時更新：</strong>因為使用響應式系統，Store 資料變化會自動觸發畫面重新渲染，使用者可即時看到進度。
+                </div>
+                <span class="page-number">16 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 17: 響應式系統簡介 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>響應式系統的運作</h1>
+                <p style="font-size: 18px; margin-bottom: 20px;">Vue 3 最核心的特性：資料變化時，畫面自動更新</p>
+
+                <div class="reactive-diagram">
+                    <h3>響應式系統運作流程</h3>
+                    <div class="reactive-flow">
+                        <div class="reactive-box data">
+                            <h5>響應式資料</h5>
+                            <p>ref / reactive</p>
+                        </div>
+                        <span class="reactive-arrow">-></span>
+                        <div class="reactive-box watcher">
+                            <h5>依賴追蹤</h5>
+                            <p>自動收集依賴</p>
+                        </div>
+                        <span class="reactive-arrow">-></span>
+                        <div class="reactive-box component">
+                            <h5>觸發更新</h5>
+                            <p>重新渲染元件</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="concept-card">
+                        <h3>追蹤依賴</h3>
+                        <p>當元件讀取響應式資料時，Vue 會自動記錄「誰」讀取了「什麼」資料</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>觸發更新</h3>
+                        <p>當資料被修改時，Vue 會通知所有依賴該資料的元件重新渲染</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>計算屬性快取</h3>
+                        <p>computed 只在依賴變化時重新計算，相同輸入會使用快取結果</p>
+                    </div>
+                </div>
+                <span class="page-number">17 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 18: 響應式程式碼範例 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>響應式系統程式碼範例</h1>
+
+                <div class="two-column">
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <div class="vue-logo"></div>
+                            <span>ref - 基本響應式</span>
+                        </div>
+                        <pre><span class="keyword">import</span> { <span class="variable">ref</span> } <span class="keyword">from</span> <span class="string">'vue'</span>
+
+<span class="comment">// 建立響應式變數</span>
+<span class="keyword">const</span> <span class="variable">count</span> = <span class="function">ref</span>(<span class="string">0</span>)
+
+<span class="comment">// 讀取值（需要 .value）</span>
+console.<span class="function">log</span>(<span class="variable">count</span>.value) <span class="comment">// 0</span>
+
+<span class="comment">// 修改值</span>
+<span class="variable">count</span>.value++ <span class="comment">// 畫面自動更新</span></pre>
+                    </div>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <div class="vue-logo"></div>
+                            <span>computed - 計算屬性</span>
+                        </div>
+                        <pre><span class="keyword">import</span> { <span class="variable">ref</span>, <span class="variable">computed</span> } <span class="keyword">from</span> <span class="string">'vue'</span>
+
+<span class="keyword">const</span> <span class="variable">pages</span> = <span class="function">ref</span>([
+  { id: 1, selected: <span class="keyword">true</span> },
+  { id: 2, selected: <span class="keyword">false</span> },
+])
+
+<span class="comment">// 自動計算已選頁面</span>
+<span class="keyword">const</span> <span class="variable">selectedCount</span> = <span class="function">computed</span>(() =>
+  <span class="variable">pages</span>.value.<span class="function">filter</span>(p => p.selected).length
+) <span class="comment">// 結果: 1</span></pre>
+                    </div>
+                </div>
+
+                <div class="box success" style="margin-top: 20px;">
+                    <strong>自動追蹤的魔法：</strong>你不需要手動告訴 Vue「這個資料變了，請更新畫面」。只要使用 ref 或 reactive 包裝資料，Vue 會自動處理一切！
+                </div>
+                <span class="page-number">18 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 19: Vue Router 路由 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>Vue Router 路由</h1>
+                <p style="font-size: 18px; margin-bottom: 20px;">管理應用程式的頁面導航</p>
+
+                <div class="code-box">
+                    <div class="code-box-header">
+                        <div class="vue-logo"></div>
+                        <span>router/index.ts - 路由設定</span>
+                    </div>
+                    <pre><span class="keyword">import</span> { <span class="variable">createRouter</span>, <span class="variable">createWebHistory</span> } <span class="keyword">from</span> <span class="string">'vue-router'</span>
+
+<span class="keyword">const</span> <span class="variable">routes</span> = [
+  {
+    <span class="attr">path</span>: <span class="string">'/'</span>,
+    <span class="attr">name</span>: <span class="string">'home'</span>,
+    <span class="attr">component</span>: () => <span class="keyword">import</span>(<span class="string">'@/views/HomePage.vue'</span>)
+  },
+  {
+    <span class="attr">path</span>: <span class="string">'/settings'</span>,
+    <span class="attr">name</span>: <span class="string">'settings'</span>,
+    <span class="attr">component</span>: () => <span class="keyword">import</span>(<span class="string">'@/views/SettingsPage.vue'</span>)
+  },
+  {
+    <span class="attr">path</span>: <span class="string">'/result'</span>,
+    <span class="attr">name</span>: <span class="string">'result'</span>,
+    <span class="attr">component</span>: () => <span class="keyword">import</span>(<span class="string">'@/views/ResultPage.vue'</span>)
+  }
+]
+
+<span class="keyword">export default</span> <span class="function">createRouter</span>({
+  <span class="attr">history</span>: <span class="function">createWebHistory</span>(),
+  <span class="attr">routes</span>
+})</pre>
+                </div>
+
+                <div class="tip-box" style="margin-top: 15px;">
+                    <h4>動態載入 (Lazy Loading)</h4>
+                    <p>使用 <code>() => import(...)</code> 語法，頁面只在被訪問時才載入，減少初始載入時間。</p>
+                </div>
+                <span class="page-number">19 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 20: App.vue 根元件 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>App.vue 根元件</h1>
+                <p style="font-size: 18px; margin-bottom: 20px;">整個應用程式的入口元件</p>
+
+                <div class="code-box">
+                    <div class="code-box-header">
+                        <div class="vue-logo"></div>
+                        <span>App.vue - 根元件結構</span>
+                    </div>
+                    <pre><span class="tag">&lt;template&gt;</span>
+  <span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="string">"app"</span><span class="tag">&gt;</span>
+    <span class="comment">&lt;!-- 頂部導航列 --&gt;</span>
+    <span class="tag">&lt;NavBar /&gt;</span>
+
+    <span class="comment">&lt;!-- 主要內容區 - 根據路由顯示不同頁面 --&gt;</span>
+    <span class="tag">&lt;main</span> <span class="attr">class</span>=<span class="string">"main-content"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;RouterView /&gt;</span>
+    <span class="tag">&lt;/main&gt;</span>
+
+    <span class="comment">&lt;!-- 全域對話框 --&gt;</span>
+    <span class="tag">&lt;GlobalDialog /&gt;</span>
+
+    <span class="comment">&lt;!-- 載入中遮罩 --&gt;</span>
+    <span class="tag">&lt;LoadingOverlay</span> <span class="vue-directive">v-if</span>=<span class="string">"isLoading"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;/template&gt;</span>
+
+<span class="tag">&lt;script</span> <span class="attr">setup</span><span class="tag">&gt;</span>
+<span class="keyword">import</span> <span class="variable">NavBar</span> <span class="keyword">from</span> <span class="string">'@/components/NavBar.vue'</span>
+<span class="keyword">import</span> <span class="variable">GlobalDialog</span> <span class="keyword">from</span> <span class="string">'@/components/GlobalDialog.vue'</span>
+<span class="keyword">import</span> <span class="variable">LoadingOverlay</span> <span class="keyword">from</span> <span class="string">'@/components/LoadingOverlay.vue'</span>
+<span class="tag">&lt;/script&gt;</span></pre>
+                </div>
+
+                <div class="box info">
+                    <strong>&lt;RouterView /&gt;</strong> 是路由的出口，根據當前 URL 顯示對應的頁面元件。
+                </div>
+                <span class="page-number">20 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 21: 元件通訊方式 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>元件通訊方式</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card">
+                        <h3>Props（父傳子）</h3>
+                        <p>父元件透過屬性傳遞資料給子元件</p>
+                        <div class="code-box" style="margin-top: 15px; font-size: 13px;">
+                            <pre><span class="comment">&lt;!-- 父元件 --&gt;</span>
+<span class="tag">&lt;PageCard</span> <span class="vue-directive">:page</span>=<span class="string">"pageData"</span> <span class="tag">/&gt;</span>
+
+<span class="comment">&lt;!-- 子元件 --&gt;</span>
+<span class="keyword">const</span> props = <span class="function">defineProps</span>&lt;{
+  page: <span class="type">PageItem</span>
+}&gt;()</pre>
+                        </div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>Emit（子傳父）</h3>
+                        <p>子元件觸發事件通知父元件</p>
+                        <div class="code-box" style="margin-top: 15px; font-size: 13px;">
+                            <pre><span class="comment">&lt;!-- 父元件 --&gt;</span>
+<span class="tag">&lt;PageCard</span> <span class="vue-directive">@select</span>=<span class="string">"handleSelect"</span> <span class="tag">/&gt;</span>
+
+<span class="comment">&lt;!-- 子元件 --&gt;</span>
+<span class="keyword">const</span> emit = <span class="function">defineEmits</span>(['select'])
+emit(<span class="string">'select'</span>, pageId)</pre>
+                        </div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>Pinia Store（跨元件）</h3>
+                        <p>任何元件都可以存取共享狀態</p>
+                        <div class="code-box" style="margin-top: 15px; font-size: 13px;">
+                            <pre><span class="comment">// 任何元件都可以使用</span>
+<span class="keyword">import</span> { useSlideStore } <span class="keyword">from</span> <span class="string">'@/stores'</span>
+<span class="keyword">const</span> store = <span class="function">useSlideStore</span>()
+store.pages <span class="comment">// 取得資料</span></pre>
+                        </div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>Provide/Inject（隔代）</h3>
+                        <p>祖先元件提供資料給後代</p>
+                        <div class="code-box" style="margin-top: 15px; font-size: 13px;">
+                            <pre><span class="comment">// 祖先元件</span>
+<span class="function">provide</span>(<span class="string">'theme'</span>, <span class="string">'dark'</span>)
+
+<span class="comment">// 任意後代元件</span>
+<span class="keyword">const</span> theme = <span class="function">inject</span>(<span class="string">'theme'</span>)</pre>
+                        </div>
+                    </div>
+                </div>
+                <span class="page-number">21 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 22: 如何客製化 - 修改樣式 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>如何客製化：修改樣式</h1>
+                <p style="font-size: 18px; margin-bottom: 20px;">想要改變系統的外觀？以下是修改方式</p>
+
+                <div class="custom-card style">
+                    <h4>修改全域樣式</h4>
+                    <p>編輯 <code>src/assets/styles/main.css</code> 或 <code>variables.css</code> 檔案，修改顏色、字體等全域設定</p>
+                </div>
+
+                <div class="code-box">
+                    <div class="code-box-header">
+                        <div class="vue-logo"></div>
+                        <span>variables.css - 主題變數</span>
+                    </div>
+                    <pre><span class="comment">/* 主要顏色 */</span>
+<span class="attr">:root</span> {
+  <span class="keyword">--primary-color</span>: <span class="string">#667eea</span>;      <span class="comment">/* 主色調 */</span>
+  <span class="keyword">--secondary-color</span>: <span class="string">#764ba2</span>;   <span class="comment">/* 次要色 */</span>
+  <span class="keyword">--success-color</span>: <span class="string">#28a745</span>;     <span class="comment">/* 成功 */</span>
+  <span class="keyword">--warning-color</span>: <span class="string">#ffc107</span>;     <span class="comment">/* 警告 */</span>
+  <span class="keyword">--error-color</span>: <span class="string">#dc3545</span>;       <span class="comment">/* 錯誤 */</span>
+
+  <span class="comment">/* 字體設定 */</span>
+  <span class="keyword">--font-family</span>: <span class="string">'Microsoft JhengHei', sans-serif</span>;
+  <span class="keyword">--font-size-base</span>: <span class="string">16px</span>;
+}</pre>
+                </div>
+
+                <div class="box tip">
+                    <strong>提示：</strong>修改 CSS 變數後，所有使用這些變數的元件都會自動更新樣式。
+                </div>
+                <span class="page-number">22 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 23: 如何客製化 - 修改文字 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>如何客製化：修改文字</h1>
+
+                <div class="custom-card text">
+                    <h4>修改介面文字</h4>
+                    <p>直接編輯各個 .vue 檔案中 &lt;template&gt; 區塊的文字內容</p>
+                </div>
+
+                <div class="code-box">
+                    <div class="code-box-header">
+                        <div class="vue-logo"></div>
+                        <span>修改按鈕文字範例</span>
+                    </div>
+                    <pre><span class="comment">&lt;!-- 修改前 --&gt;</span>
+<span class="tag">&lt;button&gt;</span>開始處理<span class="tag">&lt;/button&gt;</span>
+
+<span class="comment">&lt;!-- 修改後 --&gt;</span>
+<span class="tag">&lt;button&gt;</span>Start Processing<span class="tag">&lt;/button&gt;</span></pre>
+                </div>
+
+                <div class="tip-box">
+                    <h4>建議做法：使用 i18n 國際化</h4>
+                    <p>如果需要支援多語言，建議安裝 vue-i18n 套件，將所有文字集中管理在語言檔案中。</p>
+                </div>
+
+                <div class="two-column" style="margin-top: 20px;">
+                    <div class="box info" style="margin: 0;">
+                        <strong>常見需要修改的位置：</strong>
+                        <ul style="margin-top: 10px; margin-bottom: 0; font-size: 15px;">
+                            <li>NavBar.vue - 導航列文字</li>
+                            <li>HomePage.vue - 首頁說明</li>
+                            <li>按鈕和提示訊息</li>
+                        </ul>
+                    </div>
+                    <div class="box success" style="margin: 0;">
+                        <strong>修改後生效方式：</strong>
+                        <ul style="margin-top: 10px; margin-bottom: 0; font-size: 15px;">
+                            <li>開發模式：自動熱更新</li>
+                            <li>正式環境：需重新建置</li>
+                            <li>執行 npm run build</li>
+                        </ul>
+                    </div>
+                </div>
+                <span class="page-number">23 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 24: 如何客製化 - 新增功能 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>如何客製化：新增功能</h1>
+
+                <div class="custom-card feature">
+                    <h4>新增功能的步驟</h4>
+                    <p>遵循 Vue 3 的最佳實踐，保持程式碼的可維護性</p>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>規劃資料結構</strong><br>
+                        在 types/ 資料夾定義 TypeScript 介面
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>建立 Store（如需共享狀態）</strong><br>
+                        在 stores/ 資料夾建立新的 Pinia Store
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>建立元件</strong><br>
+                        在 components/ 或 views/ 建立 .vue 檔案
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <span class="step-number">4</span>
+                    <div>
+                        <strong>加入路由（如果是新頁面）</strong><br>
+                        在 router/index.ts 新增路由設定
+                    </div>
+                </div>
+
+                <div class="box warning">
+                    <strong>注意：</strong>修改程式碼前，建議先備份原始檔案，或使用 Git 版本控制。
+                </div>
+                <span class="page-number">24 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 25: 如何客製化 - 新增頁面 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>如何客製化：新增頁面</h1>
+
+                <div class="custom-card page">
+                    <h4>新增頁面完整範例</h4>
+                    <p>以新增「關於」頁面為例</p>
+                </div>
+
+                <div class="two-column">
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <div class="vue-logo"></div>
+                            <span>views/AboutPage.vue</span>
+                        </div>
+                        <pre><span class="tag">&lt;template&gt;</span>
+  <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="string">"about-page"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;h1&gt;</span>關於本系統<span class="tag">&lt;/h1&gt;</span>
+    <span class="tag">&lt;p&gt;</span>
+      簡報編修系統 v1.0
+    <span class="tag">&lt;/p&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;/template&gt;</span>
+
+<span class="tag">&lt;script</span> <span class="attr">setup</span> <span class="attr">lang</span>=<span class="string">"ts"</span><span class="tag">&gt;</span>
+<span class="comment">// 頁面邏輯</span>
+<span class="tag">&lt;/script&gt;</span>
+
+<span class="tag">&lt;style</span> <span class="attr">scoped</span><span class="tag">&gt;</span>
+<span class="attr">.about-page</span> {
+  <span class="keyword">padding</span>: <span class="string">20px</span>;
+}
+<span class="tag">&lt;/style&gt;</span></pre>
+                    </div>
+                    <div class="code-box">
+                        <div class="code-box-header">
+                            <div class="vue-logo"></div>
+                            <span>router/index.ts 新增路由</span>
+                        </div>
+                        <pre><span class="keyword">const</span> routes = [
+  <span class="comment">// ... 現有路由</span>
+
+  <span class="comment">// 新增關於頁面</span>
+  {
+    <span class="attr">path</span>: <span class="string">'/about'</span>,
+    <span class="attr">name</span>: <span class="string">'about'</span>,
+    <span class="attr">component</span>: () => <span class="keyword">import</span>(
+      <span class="string">'@/views/AboutPage.vue'</span>
+    )
+  }
+]</pre>
+                    </div>
+                </div>
+
+                <div class="box success" style="margin-top: 15px;">
+                    <strong>完成！</strong>現在可以透過 <code>/about</code> 路徑訪問新頁面。
+                </div>
+                <span class="page-number">25 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 26: 開發工具推薦 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>開發工具推薦</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #007acc 0%, #0066aa 100%); color: white;">
+                        <h3 style="color: white;">VS Code</h3>
+                        <p style="color: rgba(255,255,255,0.95);">最受歡迎的程式碼編輯器，免費且功能強大</p>
+                        <ul style="margin-top: 10px; font-size: 14px; color: rgba(255,255,255,0.9);">
+                            <li>安裝 Volar 擴充套件</li>
+                            <li>安裝 TypeScript Vue Plugin</li>
+                            <li>獲得完整的 Vue 3 支援</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #42b883 0%, #35495e 100%); color: white;">
+                        <h3 style="color: white;">Vue DevTools</h3>
+                        <p style="color: rgba(255,255,255,0.95);">瀏覽器開發者工具擴充</p>
+                        <ul style="margin-top: 10px; font-size: 14px; color: rgba(255,255,255,0.9);">
+                            <li>檢視元件樹狀結構</li>
+                            <li>檢查 Pinia Store 狀態</li>
+                            <li>追蹤事件和效能</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%); color: #333;">
+                        <h3 style="color: #333;">Vite</h3>
+                        <p>下一代前端建置工具（已內建）</p>
+                        <ul style="margin-top: 10px; font-size: 14px;">
+                            <li>超快的冷啟動</li>
+                            <li>即時熱更新 (HMR)</li>
+                            <li>最佳化的打包輸出</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%); color: white;">
+                        <h3 style="color: white;">常用指令</h3>
+                        <p style="color: rgba(255,255,255,0.95);">終端機常用指令</p>
+                        <ul style="margin-top: 10px; font-size: 14px; color: rgba(255,255,255,0.9);">
+                            <li><code style="color: #ffd700;">npm run dev</code> - 開發模式</li>
+                            <li><code style="color: #ffd700;">npm run build</code> - 建置</li>
+                            <li><code style="color: #ffd700;">npm run preview</code> - 預覽</li>
+                        </ul>
+                    </div>
+                </div>
+                <span class="page-number">26 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 27: 本章小結 -->
+        <div class="slide">
+            <div class="content-card">
+                <h1>本章小結</h1>
+
+                <div class="concept-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #42b883 0%, #35495e 100%); color: white;">
+                        <h3 style="color: white;">Vue 3 核心概念</h3>
+                        <ul style="color: rgba(255,255,255,0.95);">
+                            <li>單檔案元件 (SFC)</li>
+                            <li>Composition API</li>
+                            <li>響應式系統</li>
+                            <li>Vue Router 路由</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%); color: #333;">
+                        <h3 style="color: #333;">Pinia 狀態管理</h3>
+                        <ul>
+                            <li>State - 儲存資料</li>
+                            <li>Getters - 計算屬性</li>
+                            <li>Actions - 修改方法</li>
+                            <li>跨元件資料共享</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <h3 style="color: white;">專案結構</h3>
+                        <ul style="color: rgba(255,255,255,0.95);">
+                            <li>views/ - 頁面元件</li>
+                            <li>components/ - 通用元件</li>
+                            <li>stores/ - 狀態管理</li>
+                            <li>router/ - 路由設定</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%); color: white;">
+                        <h3 style="color: white;">客製化方式</h3>
+                        <ul style="color: rgba(255,255,255,0.95);">
+                            <li>修改 CSS 變數調整樣式</li>
+                            <li>編輯 template 修改文字</li>
+                            <li>建立新元件新增功能</li>
+                            <li>設定路由新增頁面</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="box tip" style="text-align: center; font-size: 18px; margin-top: 20px;">
+                    <strong>下一步：</strong>學習後端架構 Flask 與 Gemini API 整合，了解 AI 處理的核心技術！
+                </div>
+                <span class="page-number">27 / 28</span>
+            </div>
+        </div>
+
+        <!-- Slide 28: 結尾頁 -->
+        <div class="slide">
+            <div class="content-card cover-card">
+                <h1 style="font-size: 42px;">下一單元預告</h1>
+                <p class="subtitle" style="font-size: 32px; margin-top: 30px;">
+                    <strong>單元 19：後端架構 Flask 與 Gemini API 整合</strong>
+                </p>
+                <p class="subtitle" style="font-size: 18px; margin-top: 25px; line-height: 2;">
+                    Flask 框架介紹<br>
+                    RESTful API 設計<br>
+                    Gemini AI 模型呼叫<br>
+                    文字移除與背景修復原理
+                </p>
+                <div class="tags" style="margin-top: 40px;">
+                    <span class="tag">Python Flask</span>
+                    <span class="tag">REST API</span>
+                    <span class="tag">Gemini AI</span>
+                    <span class="tag">Inpainting</span>
+                </div>
+                <div style="margin-top: 50px; display: flex; gap: 20px; justify-content: center;">
+                    <a href="單元目次.html" class="next-unit-btn back-btn">回到目次</a>
+                    <a href="單元19-後端架構Flask與GeminiAPI整合.html" class="next-unit-btn">下一單元：後端架構 Flask 與 Gemini API 整合</a>
+                </div>
+                <span class="page-number" style="color: rgba(255,255,255,0.6);">28 / 28</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 導航箭頭 -->
+    <button class="nav-arrow prev-arrow" id="prevBtn" onclick="changeSlide(-1)">&#10094;</button>
+    <button class="nav-arrow next-arrow" id="nextBtn" onclick="changeSlide(1)">&#10095;</button>
+
+    <!-- 頁碼指示器 -->
+    <div class="indicators" id="indicatorContainer"></div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function init() {
+            createIndicators();
+            showSlide(0);
+            updateButtons();
+            document.addEventListener('keydown', handleKeydown);
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'Home') goToSlide(0);
+            if (e.key === 'End') goToSlide(totalSlides - 1);
+        }
+
+        function createIndicators() {
+            const container = document.getElementById('indicatorContainer');
+            container.innerHTML = '';
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.onclick = () => goToSlide(index);
+                container.appendChild(dot);
+            });
+        }
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            currentSlide = index;
+
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === index);
+            });
+
+            updateButtons();
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        function goToSlide(index) {
+            showSlide(index);
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
